@@ -1,0 +1,14 @@
+<html>
+<body>
+
+<h1>OCR2QR Demonstration
+<link rel="stylesheet" type="text/css" href= "{{url_for('static', filename='style.css')}}">
+</h1>
+
+<p> This webpage is used for generating QR codes using  optical character recognition</p>
+
+<img id = "image"  src = "{{url_for('video_feed')}}">
+
+<button onclick="document.getElementById('image').src='QRCode.png'">Generate QR Code</button>
+</body>
+</html>
