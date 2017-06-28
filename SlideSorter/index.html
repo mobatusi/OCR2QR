@@ -1,0 +1,90 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <link rel="stylesheet" href="../bower_components/webix/codebase/webix.css" type="text/css">
+    <script src="../bower_components/webix/codebase/webix.js" type="text/javascript"></script>
+</head>
+<style>
+.myBlueDiv {
+    background-color: green;
+    font-size: 28px;
+}
+</style>
+
+<body>
+    <script type="text/javascript" charset="utf-8">
+    myHeader = {
+        view: "template",
+        type: "header",
+        template: "Juans App!"
+    };
+
+// http://candygram.neurology.emory.edu:8080/api/v1/tcga/case?cohort=5887915992ca9a000b2c8ba3&limit=50
+
+    wbx_PatientSelector = {
+        view: "select",
+        label: "BranchDavidian",
+        value: 1,
+        options: [{
+                id: 1,
+                value: "Master"
+            }, // the initially selected value
+            {
+                id: 2,
+                value: "Release"
+            },
+            {
+                id: 3,
+                value: "OtherJunkish"
+            }
+        ],
+        labelAlign: "right"
+    }
+
+
+    myControls =
+
+        {
+
+
+
+        }
+
+
+    myGrid = {
+        view: "datatable",
+        autoConfig: true,
+        url: "http://candygram.neurology.emory.edu:8080/api/v1/tcga/case?cohort=5887915992ca9a000b2c8ba3&limit=10"
+    }
+
+    webix.ui({
+        rows: [
+            myHeader,
+            {cols:
+                [
+{},myGrid]           
+
+             },
+              {  view: "resizer"
+            }, {
+                cols: [{
+                        template: "HI DUDES!!",
+                        width: 100,
+                        css: "myBlueDiv"
+                    }, {
+                        view: "template",
+                        template: "Thing #1"
+                    }, {
+                        view: "resizer"
+                    },
+                    wbx_PatientSelector
+                ]
+            }
+
+        ]
+    });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,24 @@
+{
+  "name": "SlideSorter",
+  "homepage": "https://github.com/mobatusi/OCR2QR",
+  "description": "Webix Based Slider Sorting and Renaming App",
+  "main": "index.html",
+  "keywords": [
+    "webix",
+    "dsa"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "webix": "^4.4.0",
+    "jquery": "^3.2.1",
+    "openseadragon": "^2.2.1"
+  }
+}
