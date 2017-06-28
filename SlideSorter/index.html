@@ -52,10 +52,50 @@
         }
 
 
+        wbx_LeftMainPanel =
+                {rows:
+                    [
+
+            {
+            id: "wbx_LeftTopMainPanel",
+            view: "datatable",
+            autoConfig: true
+
+            } ,
+            {
+            id: "wbx_LeftBottomMainPanel",
+            view: "datatable",
+            autoConfig: true
+
+            } 
+                ]
+            }
+
+
+
     myGrid = {
         view: "datatable",
+        id: "wbx_myGrid",
         autoConfig: true,
-        url: "http://candygram.neurology.emory.edu:8080/api/v1/tcga/case?cohort=5887915992ca9a000b2c8ba3&limit=10"
+        url: "http://candygram.neurology.emory.edu:8080/api/v1/tcga/case?cohort=5887915992ca9a000b2c8ba3&limit=10",
+        on: {
+            onItemClick: function(item) { 
+
+
+                        console.log(item);
+                        DataForCurrentRow = this.getItem(item);
+                        console.log(DataForCurrentRow);
+                        $$("wbx_LeftTopMainPanel").clearAll();
+                        $$("wbx_LeftTopMainPanel").parse(DataForCurrentRow.tcga);
+
+                    $$("wbx_LeftBottomMainPanel").clearAll();
+                        $$("wbx_LeftBottomMainPanel").parse(DataForCurrentRow.tcga.meta);
+
+
+
+                            }
+
+        }
     }
 
     webix.ui({
@@ -63,7 +103,7 @@
             myHeader,
             {cols:
                 [
-{},myGrid]           
+wbx_LeftMainPanel,{view:"resizer"},myGrid]           
 
              },
               {  view: "resizer"
