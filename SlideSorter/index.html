@@ -4,130 +4,215 @@
 <head>
     <link rel="stylesheet" href="../bower_components/webix/codebase/webix.css" type="text/css">
     <script src="../bower_components/webix/codebase/webix.js" type="text/javascript"></script>
+
+
+<script src="../bower_components/jquery/dist/jquery.js" type="text/javascript"></script>
+
+    
+
 </head>
 <style>
 .myBlueDiv {
-    background-color: green;
+    background-color: orange;
     font-size: 28px;
 }
 </style>
 
 <body>
     <script type="text/javascript" charset="utf-8">
+  var  FoxCollection_uid = '595d08b392ca9a000d0748df'
+  var  resizer = {  view: "resizer"  }
+  var BaseURL = 'http://candygram.neurology.emory.edu:8080/api/v1/'
+
+function selectFolder(id) {
+                webix.message(id);
+                var row = this.getPopup().getBody().getItem(id);
+                console.log(row);
+
+                $$("wbx_MainGrid").clearAll();
+                $$("wbx_MainGrid").load( ListItemsInGirderFolder( row['_id'])  );
+                
+
+            };
+
+
+
+/// Use Jquery to get the image    $("#myLabelImg").attr("src")  should update on click
+
+//http://candygram.neurology.emory.edu:8080/api/v1/item?folderId=595d0b9b92ca9a000dd5691d&limit=50&sort=lowerName&sortdir=1
+
+            function ListItemsInGirderFolder( folderID)
+                {
+
+                    url = BaseURL + 'item?folderId=' + folderID +
+"&sort=lowerName&limit=50&sortdir=1"
+                return url
+                }
+
+//$$("mylayout").resize()
+
     myHeader = {
         view: "template",
         type: "header",
-        template: "Juans App!"
+        template: "DSA SlideSorter Helper"
     };
 
 
-ImageURL = "http://candygram.neurology.emory.edu:8080/api/v1/item/595b7b4292ca9a000d071697/tiles/images/label?width=1600"
+    url_GetFoxTopLevel_Folders = 'http://candygram.neurology.emory.edu:8080/api/v1/folder?parentType=collection&parentId=595d08b392ca9a000d0748df&limit=50&sort=lowerName&sortdir=1'
 
-
-// http://candygram.neurology.emory.edu:8080/api/v1/tcga/case?cohort=5887915992ca9a000b2c8ba3&limit=50
-
-    wbx_PatientSelector = {
-        view: "select",
-        label: "BranchDavidian",
-        value: 1,
-        options: [{
-                id: 1,
-                value: "Master"
-            }, // the initially selected value
-            {
-                id: 2,
-                value: "Release"
-            },
-            {
-                id: 3,
-                value: "OtherJunkish"
-            }
-        ],
-        labelAlign: "right"
-    }
-
-
-    myControls =
-
-        {
-
-
-
-        }
-
-
-        wbx_LeftMainPanel =
-                {rows:
-                    [
-
-            {
-            id: "wbx_LeftTopMainPanel",
-            view: "datatable",
-            autoConfig: true
-
-            } ,
-            {
-            id: "wbx_LeftBottomMainPanel",
-            view: "datatable",
-            autoConfig: true
-
-            } 
-                ]
-            }
-
-
-
-    myGrid = {
-        view: "datatable",
-        id: "wbx_myGrid",
-        autoConfig: true,
-        url: "http://candygram.neurology.emory.edu:8080/api/v1/tcga/case?cohort=5887915992ca9a000b2c8ba3&limit=10",
+    wbx_FolderSelector = {
+        view: "combo",
+        id: "wbx_FolderSelector",
+        label: "FoxFolders",
         on: {
-            onItemClick: function(item) { 
-
-
-                        console.log(item);
-                        DataForCurrentRow = this.getItem(item);
-                        console.log(DataForCurrentRow);
-                        $$("wbx_LeftTopMainPanel").clearAll();
-                        $$("wbx_LeftTopMainPanel").parse(DataForCurrentRow.tcga);
-
-                    $$("wbx_LeftBottomMainPanel").clearAll();
-                        $$("wbx_LeftBottomMainPanel").parse(DataForCurrentRow.tcga.meta);
-
-
-
-                            }
-
-        }
+            onChange: selectFolder,
+        },
+        options: {
+            body: {
+                template: "#name#"
+            }
+        },
     }
+
+
+    webix.ready(function() {
+
+        var list = $$("wbx_FolderSelector").getPopup().getList();
+        list.clearAll();
+        list.load(url_GetFoxTopLevel_Folders);
+
+
+        $$("wbx_FolderSelector").attachEvent("onAfterRender", function()
+                {
+                    webix.message("DO SOMETHING!")
+                    //this.getItem
+                 })
+
+
+    });
+
+
+    ImageURL = "http://candygram.neurology.emory.edu:8080/api/v1/item/595b7b4292ca9a000d071697/tiles/images/"
+
+    thumbHeight = 150;
+    wbx_MyImageSet = {
+        view: "template",
+        id: "wbx_MyImageSet",
+        template: "<img id='macroImg' src='" + ImageURL + "macro?height=" + thumbHeight + "' >" +
+            "<img id='labelImg' src='" + ImageURL + "label?height=" + thumbHeight + "' >"
+    }
+
+    /// Let's list the folders for the FOX Collection
+
+
+    FoxFolderViewColList = [
+        {id: "name", sort: "string"},
+        {id: "size", sort: "int"},
+        {id: "updated"},
+        {id: "imageThumb", template: function(obj) {
+            imgString = "<img src='" +BaseURL + "item/" + obj['_id'] + "/tiles/thumbnail?height=80&encoding=JPEG' >"
+            return imgString
+            },
+        },
+        { id: "StainType"},
+        { id: "OCROutput"},
+        { id: "OtherMetaData"}
+
+
+    
+    ]
+
+
+    wbx_LeftMainPanel = {
+        rows: [
+            wbx_FolderSelector,
+            wbx_MyImageSet,
+            resizer,
+
+            {
+                id: "wbx_LeftTopMainPanel",
+                view: "datatable",
+                autoConfig: true
+
+            },
+
+        ]
+    }
+
+wbx_MainGrid = 
+    {
+        view:"datatable",
+        id: "wbx_MainGrid",
+        autoConfig: true,
+        columns: FoxFolderViewColList,
+        rowHeight: 100,
+        select: "row",
+        on:{
+            "onSelectChange": function(id) { webix.message("DOLU CLICKITY CLACKITY"+id)}
+        },
+
+    }
+
+
+  // myGrid = {
+    //     view: "datatable",
+    //     id: "wbx_myGrid",
+    //     autoConfig: true,
+    //     url: "http://candygram.neurology.emory.edu:8080/api/v1/tcga/case?cohort=5887915992ca9a000b2c8ba3&limit=10",
+    //     on: {
+    //         onItemClick: function(item) { 
+
+
+    //                     console.log(item);
+    //                     DataForCurrentRow = this.getItem(item);
+    //                     console.log(DataForCurrentRow);
+    //                     $$("wbx_LeftTopMainPanel").clearAll();
+    //                     $$("wbx_LeftTopMainPanel").parse(DataForCurrentRow.tcga);
+
+    //                 $$("wbx_LeftBottomMainPanel").clearAll();
+    //                     $$("wbx_LeftBottomMainPanel").parse(DataForCurrentRow.tcga.meta);
+
+
+
+    //                         }
+
+    //     }
+    // }
+
+ wbx_RightMainPanel = {
+        rows: [
+            {view:"template", type:"header",template: "DataGrid"},
+            wbx_MainGrid
+        ]
+    }
+
+  
 
     webix.ui({
         rows: [
-            myHeader,
-            {cols:
-                [
-wbx_LeftMainPanel,{view:"resizer"},myGrid]           
-
-             },
-              {  view: "resizer"
-            }, {
-                cols: [{
-                        template: "HI DUDES!!",
-                        width: 100,
-                        css: "myBlueDiv"
-                    }, {
-                        view: "template",
-                        template: "Thing #1"
-                    }, {
-                        view: "resizer"
-                    },
-                    wbx_PatientSelector
+            myHeader, {
+                cols: [
+                    wbx_LeftMainPanel, wbx_RightMainPanel
                 ]
-            }
-
+            },
         ]
+
     });
+
+    // {
+    //     cols: [{
+    //             template: "HI DUDES!!",
+    //             width: 100,
+    //             css: "myBlueDiv"
+    //         }, {
+    //             view: "template",
+    //             template: "Thing #1"
+    //         }, {
+    //             view: "resizer"
+    //         },
+
+    //     ]
+    // }
     </script>
 </body>
 
