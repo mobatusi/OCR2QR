@@ -1,219 +1,157 @@
 <!DOCTYPE HTML>
 <html>
-
 <head>
-    <link rel="stylesheet" href="../bower_components/webix/codebase/webix.css" type="text/css">
-    <script src="../bower_components/webix/codebase/webix.js" type="text/javascript"></script>
-
-
-<script src="../bower_components/jquery/dist/jquery.js" type="text/javascript"></script>
-
-    
-
+  <link rel="stylesheet" href="../bower_components/webix/codebase/webix.css" type="text/css">
+  <script src="../bower_components/webix/codebase/webix.js" type="text/javascript"></script>
+  <script src="../bower_components/jquery/dist/jquery.js" type="text/javascript"></script>
 </head>
+
 <style>
-.myBlueDiv {
-    background-color: orange;
-    font-size: 28px;
-}
+  .standardDiv {
+    background-color: rgb(97,91,90);
+    font-size: 18px;
+    color: white;
+  }
 </style>
 
 <body>
-    <script type="text/javascript" charset="utf-8">
+  <script type="text/javascript" charset="utf-8">
+  //FoxCollection_uid not being used
   var  FoxCollection_uid = '595d08b392ca9a000d0748df'
-  var  resizer = {  view: "resizer"  }
+  //The bottom two variables are being used
+  var  resizer = {  view: "resizer"  } //This just makes it easier to add the resizer at different locations
   var BaseURL = 'http://candygram.neurology.emory.edu:8080/api/v1/'
 
-function selectFolder(id) {
-                webix.message(id);
-                var row = this.getPopup().getBody().getItem(id);
-                console.log(row);
+  //What does this function do??? First of all this is a function created in this script, it is not a function inherent to webix or javascript. 
+  //This seems to be used when selecting from the drop down select box.
+  //It must be supplied the id, which is what is used to pop-up in a message box, before I commented it out. 
+  function selectFolder(id) {
+    webix.message(id); //this just spits out the id on the top right using the webix message function. This is unecessary so I can comment it out. 
+    var row = this.getPopup().getBody().getItem(id);
+    //This is looking at row id, which must be a json object (I think) and returning the Item from the Body of the Popup from the id 
+    //This clears the the container (wbx_MainGrid) before running the next line
+    //Remember that the double $$ is webix's form of jquery call
+    $$("wbx_MainGrid").clearAll();
+    //This jquery call is calling another function that is defined in the bottom part
+    //Not sure why you need to pass it row with '_id' on it. In javascript this means that it is passing the _id property of the row object
+    $$("wbx_MainGrid").load( ListItemsInGirderFolder( row['_id'])  );
+    //Note that the function above (inside the load) returns a url. This url contains json objects (many of them), with each object having an _id property
+  };
 
-                $$("wbx_MainGrid").clearAll();
-                $$("wbx_MainGrid").load( ListItemsInGirderFolder( row['_id'])  );
-                
-
-            };
-
-
-
-/// Use Jquery to get the image    $("#myLabelImg").attr("src")  should update on click
-
+//below is a sample directory for a fox subdirectory
 //http://candygram.neurology.emory.edu:8080/api/v1/item?folderId=595d0b9b92ca9a000dd5691d&limit=50&sort=lowerName&sortdir=1
 
-            function ListItemsInGirderFolder( folderID)
-                {
+//This function is just a string concatenation function, retuns a url to load
+  function ListItemsInGirderFolder( folderID) {
+    url = BaseURL + 'item?folderId=' + folderID + "&sort=lowerName&limit=50&sortdir=1"
+    return url
+  }
 
-                    url = BaseURL + 'item?folderId=' + folderID +
-"&sort=lowerName&limit=50&sortdir=1"
-                return url
-                }
+  //Now that the functions have been set-up, predefine the webix containers to be used and edit easier down the line. 
+  myHeader = {
+    view: "template",
+    type: "header",
+    template: "DSA SlideSorter Helper",
+    css:"standardDiv"
+  };
 
-//$$("mylayout").resize()
+  //This is the url for the top level folder, where the directories of each image date are located at. The previous url (those obtained from teh functions) are for each image inside those directories (I think)
+  url_FoxTopLevel_Folders = 'http://candygram.neurology.emory.edu:8080/api/v1/folder?parentType=collection&parentId=595d08b392ca9a000d0748df&limit=50&sort=lowerName&sortdir=1'
+  ImageURL = "http://candygram.neurology.emory.edu:8080/api/v1/item/595b7b4292ca9a000d071697/tiles/images/";
+  ImageBaseURL = "http://candygram.neurology.emory.edu:8080/api/v1/item/";
+  thumbHeight = 300;
 
-    myHeader = {
-        view: "template",
-        type: "header",
-        template: "DSA SlideSorter Helper"
-    };
+  //I think this container is changed dynamically as different folders are selected
+  wbx_FolderSelector = {
+    view: "combo",
+    id: "wbx_FolderSelector",
+    label: "Folder Select",
+    on: { //allows attaching custom handlers to inner events of the component
+      onChange: selectFolder, //fires when the value of the control is changed
+    },
+    options: {
+      body: {
+        template: "#name#",
+      }
+    },
+  }
 
+  //this function is definitely required to load the 
+  webix.ready(function() {
+    var list = $$("wbx_FolderSelector").getPopup().getList();
+    list.clearAll();
+    list.load(url_FoxTopLevel_Folders); //loads json objects to list
+    //$$("wbx_FolderSelector").attachEvent("onAfterRender", function() {
+      //webix.message("DO SOMETHING!")
+      //this.getItem
+    //})
+  });
 
-    url_GetFoxTopLevel_Folders = 'http://candygram.neurology.emory.edu:8080/api/v1/folder?parentType=collection&parentId=595d08b392ca9a000d0748df&limit=50&sort=lowerName&sortdir=1'
+  //left panel that dynamically switches images displayed based on the file selected from the right panel datatable
+  /// Use Jquery to get the image    $("#myLabelImg").attr("src")  should update on click
+  wbx_MyImageSet = {
+    view: "template",
+    id: "wbx_MyImageSet",
+    template: "<img id='labelImg' src='" + ImageURL + "label?height=" + thumbHeight + "' >"
+  }
 
-    wbx_FolderSelector = {
-        view: "combo",
-        id: "wbx_FolderSelector",
-        label: "FoxFolders",
-        on: {
-            onChange: selectFolder,
-        },
-        options: {
-            body: {
-                template: "#name#"
-            }
-        },
+  // Let's list the folders for the FOX Collection
+  //the sort command coupled with the id allows for formatting of the datatable based ont he svs file. This is how it is able to load the data properly
+  FoxFolderViewColList = [
+    { id: "imageThumb", template: function(obj) {
+      imgString = "<img src='" +BaseURL + "item/" + obj['_id'] + "/tiles/thumbnail?height=80&encoding=JPEG' >"
+      return imgString
+      },
+    }, 
+    {id: "name", sort: "string"},
+    {id: "size", sort: "int"},
+    {id: "updated"},
+    {id: "_id", sort: "string"}
+  ]
+
+  //the left panel (not including the header)
+  wbx_LeftMainPanel = {
+    rows: [ wbx_FolderSelector, wbx_MyImageSet ]
+  }
+
+  wbx_MainGrid = {
+    view:"datatable",
+    id: "wbx_MainGrid",
+    autoConfig: true,
+    columns: FoxFolderViewColList,
+    rowHeight: 100,
+    select: "row",
+    on: { //this will fire when selection is changed on datatable
+      //"onSelectChange": function(id) { 
+      "onItemClick": function(id){
+        //webix.message("select id: " + id) //for debugging
+        DataForCurrentRow =   this.getItem(id);
+            //console.log(DataForCurrentRow);
+        currentImageURL = ImageBaseURL + DataForCurrentRow._id + "/tiles/images/label?height=" + thumbHeight
+        //console.log(currentImageURL)
+        $("#labelImg").attr("src",currentImageURL);
+      }
     }
+  }
 
-
-    webix.ready(function() {
-
-        var list = $$("wbx_FolderSelector").getPopup().getList();
-        list.clearAll();
-        list.load(url_GetFoxTopLevel_Folders);
-
-
-        $$("wbx_FolderSelector").attachEvent("onAfterRender", function()
-                {
-                    webix.message("DO SOMETHING!")
-                    //this.getItem
-                 })
-
-
-    });
-
-
-    ImageURL = "http://candygram.neurology.emory.edu:8080/api/v1/item/595b7b4292ca9a000d071697/tiles/images/"
-
-    thumbHeight = 150;
-    wbx_MyImageSet = {
-        view: "template",
-        id: "wbx_MyImageSet",
-        template: "<img id='macroImg' src='" + ImageURL + "macro?height=" + thumbHeight + "' >" +
-            "<img id='labelImg' src='" + ImageURL + "label?height=" + thumbHeight + "' >"
-    }
-
-    /// Let's list the folders for the FOX Collection
-
-
-    FoxFolderViewColList = [
-        {id: "name", sort: "string"},
-        {id: "size", sort: "int"},
-        {id: "updated"},
-        {id: "imageThumb", template: function(obj) {
-            imgString = "<img src='" +BaseURL + "item/" + obj['_id'] + "/tiles/thumbnail?height=80&encoding=JPEG' >"
-            return imgString
-            },
-        },
-        { id: "StainType"},
-        { id: "OCROutput"},
-        { id: "OtherMetaData"}
-
-
-    
+  wbx_RightMainPanel = {
+    rows: [ //contains another header
+      {view:"template", type:"header",template: "DataGrid", css:"standardDiv"},
+      wbx_MainGrid
     ]
-
-
-    wbx_LeftMainPanel = {
-        rows: [
-            wbx_FolderSelector,
-            wbx_MyImageSet,
-            resizer,
-
-            {
-                id: "wbx_LeftTopMainPanel",
-                view: "datatable",
-                autoConfig: true
-
-            },
-
-        ]
-    }
-
-wbx_MainGrid = 
-    {
-        view:"datatable",
-        id: "wbx_MainGrid",
-        autoConfig: true,
-        columns: FoxFolderViewColList,
-        rowHeight: 100,
-        select: "row",
-        on:{
-            "onSelectChange": function(id) { webix.message("DOLU CLICKITY CLACKITY"+id)}
-        },
-
-    }
-
-
-  // myGrid = {
-    //     view: "datatable",
-    //     id: "wbx_myGrid",
-    //     autoConfig: true,
-    //     url: "http://candygram.neurology.emory.edu:8080/api/v1/tcga/case?cohort=5887915992ca9a000b2c8ba3&limit=10",
-    //     on: {
-    //         onItemClick: function(item) { 
-
-
-    //                     console.log(item);
-    //                     DataForCurrentRow = this.getItem(item);
-    //                     console.log(DataForCurrentRow);
-    //                     $$("wbx_LeftTopMainPanel").clearAll();
-    //                     $$("wbx_LeftTopMainPanel").parse(DataForCurrentRow.tcga);
-
-    //                 $$("wbx_LeftBottomMainPanel").clearAll();
-    //                     $$("wbx_LeftBottomMainPanel").parse(DataForCurrentRow.tcga.meta);
-
-
-
-    //                         }
-
-    //     }
-    // }
-
- wbx_RightMainPanel = {
-        rows: [
-            {view:"template", type:"header",template: "DataGrid"},
-            wbx_MainGrid
-        ]
-    }
-
+  }
   
+  //main ui
+  webix.ui({
+    //This ui is a 2 rows (first is just the header) with the last row being split into 2 columns.
+    rows: [
+      myHeader, //the simple header, this is static
+      {
+        cols: [ wbx_LeftMainPanel, wbx_RightMainPanel ]
+      },
+    ]
+  });
 
-    webix.ui({
-        rows: [
-            myHeader, {
-                cols: [
-                    wbx_LeftMainPanel, wbx_RightMainPanel
-                ]
-            },
-        ]
-
-    });
-
-    // {
-    //     cols: [{
-    //             template: "HI DUDES!!",
-    //             width: 100,
-    //             css: "myBlueDiv"
-    //         }, {
-    //             view: "template",
-    //             template: "Thing #1"
-    //         }, {
-    //             view: "resizer"
-    //         },
-
-    //     ]
-    // }
-    </script>
+  </script>
 </body>
-
 </html>
