@@ -1,30 +1,19 @@
 <!DOCTYPE HTML>
 <html>
-
 <head>
+    <title> DSA SlideSorter Helper</title>
     <link rel="stylesheet" href="http://cdn.webix.com/edge/webix.css" type="text/css">
     <script src="http://cdn.webix.com/edge/webix.js" type="text/javascript"></script>
-
-
-<script
-  src="https://code.jquery.com/jquery-3.2.1.min.js"
-  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-  crossorigin="anonymous"></script>
-    
-
+    <script
+            src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
 </head>
-<style>
-.myBlueDiv {
-    background-color: orange;
-    font-size: 28px;
-}
-</style>
-
 <body>
     <script type="text/javascript" charset="utf-8">
   var  FoxCollection_uid = '595d08b392ca9a000d0748df'
   var  resizer = {  view: "resizer"  }
-  var BaseURL = 'http://candygram.neurology.emory.edu:8080/api/v1/'
+  var  BaseURL = 'http://candygram.neurology.emory.edu:8080/api/v1/'
 
 function selectFolder(id) {
                 webix.message(id);
@@ -33,21 +22,14 @@ function selectFolder(id) {
 
                 $$("wbx_MainGrid").clearAll();
                 $$("wbx_MainGrid").load( ListItemsInGirderFolder( row['_id'])  );
-                
-
             };
-
-
-
 /// Use Jquery to get the image    $("#myLabelImg").attr("src")  should update on click
 
 //http://candygram.neurology.emory.edu:8080/api/v1/item?folderId=595d0b9b92ca9a000dd5691d&limit=50&sort=lowerName&sortdir=1
 
-            function ListItemsInGirderFolder( folderID)
+function ListItemsInGirderFolder( folderID)
                 {
-
-                    url = BaseURL + 'item?folderId=' + folderID +
-"&sort=lowerName&limit=50&sortdir=1"
+                url = BaseURL + 'item?folderId=' + folderID + "&sort=lowerName&limit=50&sortdir=1"
                 return url
                 }
 
@@ -96,7 +78,7 @@ function selectFolder(id) {
 
     ImageURL = "http://candygram.neurology.emory.edu:8080/api/v1/item/595b7b4292ca9a000d071697/tiles/images/"
 
-    thumbHeight = 150;
+    thumbHeight = 450;
     wbx_MyImageSet = {
         view: "template",
         id: "wbx_MyImageSet",
@@ -150,36 +132,14 @@ wbx_MainGrid =
         rowHeight: 100,
         select: "row",
         on:{
-            "onSelectChange": function(id) { webix.message("DOLU CLICKITY CLACKITY"+id)}
+            "onSelectChange": function(){
+                            selected = $$("wbx_RightMainPanel").getPopup().getList() ;
+                 
+                        }
         },
 
     }
 
-
-  // myGrid = {
-    //     view: "datatable",
-    //     id: "wbx_myGrid",
-    //     autoConfig: true,
-    //     url: "http://candygram.neurology.emory.edu:8080/api/v1/tcga/case?cohort=5887915992ca9a000b2c8ba3&limit=10",
-    //     on: {
-    //         onItemClick: function(item) { 
-
-
-    //                     console.log(item);
-    //                     DataForCurrentRow = this.getItem(item);
-    //                     console.log(DataForCurrentRow);
-    //                     $$("wbx_LeftTopMainPanel").clearAll();
-    //                     $$("wbx_LeftTopMainPanel").parse(DataForCurrentRow.tcga);
-
-    //                 $$("wbx_LeftBottomMainPanel").clearAll();
-    //                     $$("wbx_LeftBottomMainPanel").parse(DataForCurrentRow.tcga.meta);
-
-
-
-    //                         }
-
-    //     }
-    // }
 
  wbx_RightMainPanel = {
         rows: [
@@ -201,20 +161,6 @@ wbx_MainGrid =
 
     });
 
-    // {
-    //     cols: [{
-    //             template: "HI DUDES!!",
-    //             width: 100,
-    //             css: "myBlueDiv"
-    //         }, {
-    //             view: "template",
-    //             template: "Thing #1"
-    //         }, {
-    //             view: "resizer"
-    //         },
-
-    //     ]
-    // }
     </script>
 </body>
 
