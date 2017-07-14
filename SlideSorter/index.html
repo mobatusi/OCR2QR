@@ -26,8 +26,10 @@
   //This seems to be used when selecting from the drop down select box.
   //It must be supplied the id, which is what is used to pop-up in a message box, before I commented it out. 
   function selectFolder(id) {
-    webix.message(id); //this just spits out the id on the top right using the webix message function. This is unecessary so I can comment it out. 
+    // console.log(id);
+    //webix.message(id); //this just spits out the id on the top right using the webix message function. This is unecessary so I can comment it out. 
     var row = this.getPopup().getBody().getItem(id);
+    // console.log(row); //for debugging
     //This is looking at row id, which must be a json object (I think) and returning the Item from the Body of the Popup from the id 
     //This clears the the container (wbx_MainGrid) before running the next line
     //Remember that the double $$ is webix's form of jquery call
@@ -68,6 +70,10 @@
     label: "Folder Select",
     on: { //allows attaching custom handlers to inner events of the component
       onChange: selectFolder, //fires when the value of the control is changed
+      //"onAfterRender": function(){
+      //  selectFolder;
+      //neeed some stuff here to happen at the beginning only
+      //}
     },
     options: {
       body: {
@@ -75,17 +81,6 @@
       }
     },
   }
-
-  //this function is definitely required to load the 
-  webix.ready(function() {
-    var list = $$("wbx_FolderSelector").getPopup().getList();
-    list.clearAll();
-    list.load(url_FoxTopLevel_Folders); //loads json objects to list
-    //$$("wbx_FolderSelector").attachEvent("onAfterRender", function() {
-      //webix.message("DO SOMETHING!")
-      //this.getItem
-    //})
-  });
 
   //left panel that dynamically switches images displayed based on the file selected from the right panel datatable
   /// Use Jquery to get the image    $("#myLabelImg").attr("src")  should update on click
@@ -120,7 +115,6 @@
     autoConfig: true,
     columns: FoxFolderViewColList,
     rowHeight: 100,
-    select: "row",
     on: { //this will fire when selection is changed on datatable
       //"onSelectChange": function(id) { 
       "onItemClick": function(id){
@@ -130,7 +124,7 @@
         currentImageURL = ImageBaseURL + DataForCurrentRow._id + "/tiles/images/label?height=" + thumbHeight
         //console.log(currentImageURL)
         $("#labelImg").attr("src",currentImageURL);
-      }
+      },
     }
   }
 
@@ -142,7 +136,7 @@
   }
   
   //main ui
-  webix.ui({
+  webix.ui( {
     //This ui is a 2 rows (first is just the header) with the last row being split into 2 columns.
     rows: [
       myHeader, //the simple header, this is static
@@ -150,6 +144,20 @@
         cols: [ wbx_LeftMainPanel, wbx_RightMainPanel ]
       },
     ]
+  });
+
+    //this function is definitely required to load the 
+  webix.ready(function() {
+    //this is getting teh wbx_FolderSelector component above
+    var list = $$("wbx_FolderSelector").getPopup().getList();
+    console.log(list);
+    list.clearAll();
+    list.load(url_FoxTopLevel_Folders); //loads json objects to list
+    //console.log(url_FoxTopLevel_Folders);
+    //$$("wbx_FolderSelector").attachEvent("onAfterRender", function() {
+      //webix.message("DO SOMETHING!")
+      //this.getItem
+    //})
   });
 
   </script>
