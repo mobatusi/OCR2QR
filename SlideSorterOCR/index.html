@@ -73,7 +73,8 @@
       //webix.message("DO SOMETHING!")
       //this.getItem
     //})
-    webix.ajax("http://localhost:5000/ocr/home/juan_carlos/Dropbox/Gutman_Lab/OCR2QR/SlideSorter/1008028.svs.thumb.labelImage.512.jpg", function(response) {
+    webix.ajax("http://127.0.0.1:5000/getImage?imageURL=https://www.zachleat.com/web/wp-content/uploads/2011/01/Screen-shot-2011-01-11-at-7.37.54-PM.png", function(response) {
+    // webix.ajax("http://127.0.0.1:5000/index", function(response) {
       console.log(response);
       var data = JSON.parse(response);
       $$("outputOCR").parse(data);
@@ -84,7 +85,8 @@
   wbx_MyImageSet = {
     view: "template",
     id: "wbx_MyImageSet",
-    template: "<img id='labelImg' src='" + ImageURL + "label?height=" + thumbHeight + "' >"
+    // template: "<img id='labelImg' src='" + ImageURL + "label?height=" + thumbHeight + "' >"
+    template: "<img id='labelImg' src='https://www.zachleat.com/web/wp-content/uploads/2011/01/Screen-shot-2011-01-11-at-7.37.54-PM.png'>"
   }
   // Let's list the folders for the FOX Collection
   //the sort command coupled with the id allows for formatting of the datatable based ont he svs file. This is how it is able to load the data properly
@@ -100,9 +102,26 @@
     {id: "_id", sort: "string"}
   ]
 
+inputImage = {
+  view: "template",
+  id: "inputImage",
+  autoConfig: true,
+  template: "<img id='sampleImg' src='https://www.zachleat.com/web/wp-content/uploads/2011/01/Screen-shot-2011-01-11-at-7.37.54-PM.png'>"
+} 
+
+outputOCR = {
+  view: "template",
+  id: "outputOCR",
+  template: "#sampleOutput#"
+} 
+
+wbx_ocr = {
+    cols: [inputImage, resizer, outputOCR ]
+  }
+
   //the left panel (not including the header)
   wbx_LeftMainPanel = {
-    rows: [ wbx_FolderSelector, wbx_MyImageSet]
+    rows: [ wbx_FolderSelector, wbx_MyImageSet, wbx_ocr]
   }
   wbx_MainGrid = {
     view:"datatable",
