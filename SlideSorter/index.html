@@ -98,8 +98,20 @@ function ListItemsInGirderFolder( folderID)
         template:"<img id='labelImg' src='" + ImageURL + "label?height=" + thumbHeight + "' >"
     }
 
-    
+    thumbHeight = 300;
+    wbx_MyOcr = {
+        view: "template",
+        id: "wbx_MyOcr",
+        template:"<img id='labelImg' src='" + ImageURL + "label?height=" + thumbHeight + "' >"
+    }
 
+    my_button = {
+        view: "button",
+        id: "my_button",
+        value:"Display Text", 
+        type:"form", 
+        inputWidth:100 
+    }
 
     /// Let's list the folders for the FOX Collection
 
@@ -144,7 +156,7 @@ function ListItemsInGirderFolder( folderID)
     //}
   //the left panel (not including the header)
   wbx_LeftMainPanel = {
-    rows: [ wbx_FolderSelector,resizer, wbx_MyImageSet]
+    rows: [ wbx_FolderSelector, wbx_MyImageSet,resizer,my_button,wbx_MyOcr]
   }
 wbx_MainGrid = 
     {
