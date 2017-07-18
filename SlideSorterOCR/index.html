@@ -102,12 +102,12 @@
     {id: "_id", sort: "string"}
   ]
 
-inputImage = {
-  view: "template",
-  id: "inputImage",
-  autoConfig: true,
-  template: "<img id='sampleImg' src='https://www.zachleat.com/web/wp-content/uploads/2011/01/Screen-shot-2011-01-11-at-7.37.54-PM.png'>"
-} 
+// inputImage = {
+//   view: "template",
+//   id: "inputImage",
+//   autoConfig: true,
+//   template: "<img id='sampleImg' src='https://www.zachleat.com/web/wp-content/uploads/2011/01/Screen-shot-2011-01-11-at-7.37.54-PM.png'>"
+// } 
 
 outputOCR = {
   view: "template",
@@ -116,7 +116,7 @@ outputOCR = {
 } 
 
 wbx_ocr = {
-    cols: [inputImage, resizer, outputOCR ]
+    cols: [ outputOCR ]
   }
 
   //the left panel (not including the header)
@@ -133,6 +133,7 @@ wbx_ocr = {
     on: { //this will fire when selection is changed on datatable
       "onItemClick": function(id){
         DataForCurrentRow =   this.getItem(id);
+        webix.message(DataForCurrentRow);
         currentImageURL = ImageBaseURL + DataForCurrentRow._id + "/tiles/images/label?height=" + thumbHeight
         // alert(currentImageURL)
         $("#labelImg").attr("src",currentImageURL);
