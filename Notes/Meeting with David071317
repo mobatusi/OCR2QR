@@ -1,0 +1,14 @@
+Meeting with David 07/13/17
+setup a route using python flask
+route and endpoint
+import ssl
+import qr_generation as qg
+import StringIO
+BarCoderQRmaker
+@pp.route('/add_numbers')
+define a function to be served up to the server
+
+from flask import flask, send_from directory, request, 
+create a simple webix application with two boxes
+	image on left is random thumbnail
+	text on the right is OCR output
