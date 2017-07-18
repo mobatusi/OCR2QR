@@ -1,0 +1,64 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <link rel="stylesheet" href="../bower_components/webix/codebase/webix.css" type="text/css">
+  <script src="../bower_components/webix/codebase/webix.js" type="text/javascript"></script>
+  <script src="../bower_components/jquery/dist/jquery.js" type="text/javascript"></script>
+</head>
+
+<body>
+  <script type="text/javascript" charset="utf-8">
+  sampleURL1 = "http://derbyshiremusichub.org.uk/images/MEHEM%20Red%20Footer_tcm48-245903.jpg"
+  var  resizer = {  view: "resizer"  } //This just makes it easier to add the resizer at different locations
+  wbx_OutputPanel = {
+    view:"template",
+    id:"ocrOuput",
+    template:"here be the output!"   
+  }
+
+  wbx_OCRPanel = {
+    view: "button",
+    id: "OCR_button",
+    value: "run OCR!?????????????",
+    inputWidth: 1000,
+    on: {
+          "onItemClick": function(id){
+          alert("hello");
+        }
+    }
+}
+
+// template: "<img id='sampleImg' src='https://www.zachleat.com/web/wp-content/uploads/2011/01/Screen-shot-2011-01-11-at-7.37.54-PM.png'>"
+  wbx_ImagePanel = {
+    cols: [ //contains another header
+      {view:"template", id:"image1",template: "<img id='sampleImg' src='http://derbyshiremusichub.org.uk/images/MEHEM%20Red%20Footer_tcm48-245903.jpg'>",
+        on: {
+          "onItemClick": function(image1){
+          alert("hello");
+          }
+        }
+      }
+    ],
+  }
+  
+  //Now that the functions have been set-up, predefine the webix containers to be used and edit easier down the line. 
+  myHeader = {
+    view: "template",
+    type: "header",
+    template: "DSA Slide OCR App"
+  };
+
+  //main ui
+  webix.ui({
+    rows: [
+      myHeader,
+      wbx_ImagePanel,
+      resizer,
+      wbx_OCRPanel,
+      resizer,
+      wbx_OutputPanel
+    ]
+  });
+  </script>
+</body>
+</html>
