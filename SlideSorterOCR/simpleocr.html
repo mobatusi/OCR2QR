@@ -40,6 +40,26 @@
       }
     ],
   }
+
+  wbx_dataView1 = {
+    view:"dataview",
+    select:1, 
+    id:"dataview1",
+    xCount:3,
+    type: {
+        height: 60,
+    },
+    template: "<img id='sampleImg' src='http://derbyshiremusichub.org.uk/images/MEHEM%20Red%20Footer_tcm48-245903.jpg'>"
+    // template:"<div class='webix_strong'>#title#</div> Year: #year#, rank: #rank#"
+    // data:[
+    //     { id:1, title:"The Shawshank Redemption", year:1994, rank:1},
+    //     { id:2, title:"The Godfather", year:1972, rank:2},
+    //     { id:3, title:"The Godfather: Part II", year:1974, rank:3},
+    //     { id:4, title:"The Good, the Bad and the Ugly", year:1966, rank:4}
+    // ] 
+  }
+
+
   
   //Now that the functions have been set-up, predefine the webix containers to be used and edit easier down the line. 
   myHeader = {
@@ -52,7 +72,7 @@
   webix.ui({
     rows: [
       myHeader,
-      wbx_ImagePanel,
+      wbx_dataView1,
       resizer,
       wbx_OCRPanel,
       resizer,

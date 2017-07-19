@@ -49,6 +49,7 @@
   ImageURL = "http://candygram.neurology.emory.edu:8080/api/v1/item/595b7b4292ca9a000d071697/tiles/images/";
   ImageBaseURL = "http://candygram.neurology.emory.edu:8080/api/v1/item/";
   thumbHeight = 300;
+  currentOCRUrl = "https://www.zachleat.com/web/wp-content/uploads/2011/01/Screen-shot-2011-01-11-at-7.37.54-PM.png"
   //I think this container is changed dynamically as different folders are selected
   wbx_FolderSelector = {
     view: "combo",
@@ -73,12 +74,12 @@
       //webix.message("DO SOMETHING!")
       //this.getItem
     //})
-    webix.ajax("http://127.0.0.1:5000/getImage?imageURL=https://www.zachleat.com/web/wp-content/uploads/2011/01/Screen-shot-2011-01-11-at-7.37.54-PM.png", function(response) {
-    // webix.ajax("http://127.0.0.1:5000/index", function(response) {
-      console.log(response);
-      var data = JSON.parse(response);
-      $$("outputOCR").parse(data);
-    })
+    // webix.ajax("http://127.0.0.1:5000/getImage?imageURL="+currentOCRUrl, function(response) {
+    // // webix.ajax("http://127.0.0.1:5000/index", function(response) {
+    //   console.log(response);
+    //   var data = JSON.parse(response);
+    //   $$("outputOCR").parse(data);
+    // })
   });
   //left panel that dynamically switches images displayed based on the file selected from the right panel datatable
   /// Use Jquery to get the image    $("#myLabelImg").attr("src")  should update on click
@@ -101,24 +102,20 @@
     {id: "updated"},
     {id: "_id", sort: "string"}
   ]
-
 // inputImage = {
 //   view: "template",
 //   id: "inputImage",
 //   autoConfig: true,
 //   template: "<img id='sampleImg' src='https://www.zachleat.com/web/wp-content/uploads/2011/01/Screen-shot-2011-01-11-at-7.37.54-PM.png'>"
 // } 
-
-outputOCR = {
-  view: "template",
-  id: "outputOCR",
-  template: "#sampleOutput#"
-} 
-
-wbx_ocr = {
+  outputOCR = {
+    view: "template",
+    id: "outputOCR",
+    template: "#sampleOutput#"
+  }
+  wbx_ocr = {
     cols: [ outputOCR ]
   }
-
   //the left panel (not including the header)
   wbx_LeftMainPanel = {
     rows: [ wbx_FolderSelector, wbx_MyImageSet, wbx_ocr]
@@ -134,9 +131,15 @@ wbx_ocr = {
       "onItemClick": function(id){
         DataForCurrentRow =   this.getItem(id);
         webix.message(DataForCurrentRow);
-        currentImageURL = ImageBaseURL + DataForCurrentRow._id + "/tiles/images/label?height=" + thumbHeight
+        currentImageURL = ImageBaseURL + DataForCurrentRow._id + "/tiles/images/label?height=" + thumbHeight;
         // alert(currentImageURL)
         $("#labelImg").attr("src",currentImageURL);
+        webix.ajax("http://127.0.0.1:5000/getImage?imageURL="+currentImageURL, function(response) {
+          console.log(response);
+          var data = JSON.parse(response);
+          $$("outputOCR").parse(data);
+        })
+        // currentOCRUrl = "http://www.myfreeocr.com/img/brading-bg.png";
       }
     }
   }
