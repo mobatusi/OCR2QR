@@ -50,6 +50,7 @@
   ImageBaseURL = "http://candygram.neurology.emory.edu:8080/api/v1/item/";
   thumbHeight = 300;
   currentOCRUrl = "https://www.zachleat.com/web/wp-content/uploads/2011/01/Screen-shot-2011-01-11-at-7.37.54-PM.png"
+
   //I think this container is changed dynamically as different folders are selected
   wbx_FolderSelector = {
     view: "combo",
@@ -113,13 +114,16 @@
     id: "outputOCR",
     template: "#sampleOutput#"
   }
+
   wbx_ocr = {
     cols: [ outputOCR ]
   }
+
   //the left panel (not including the header)
   wbx_LeftMainPanel = {
     rows: [ wbx_FolderSelector, wbx_MyImageSet, wbx_ocr]
   }
+
   wbx_MainGrid = {
     view:"datatable",
     id: "wbx_MainGrid",
@@ -143,6 +147,7 @@
       }
     }
   }
+
   wbx_RightMainPanel = {
     rows: [ //contains another header
       {view:"template", type:"header",template: "DataGrid", css:"standardDiv"},
