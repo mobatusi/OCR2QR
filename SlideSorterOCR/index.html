@@ -6,90 +6,66 @@
   <script src="../bower_components/jquery/dist/jquery.js" type="text/javascript"></script>
 </head>
 
-<style>
-  .standardDiv {
-    background-color: rgb(97,91,90);
-    font-size: 18px;
-    color: white;
-  }
-</style>
-
 <body>
   <script type="text/javascript" charset="utf-8">
-  //FoxCollection_uid not being used
-  var  FoxCollection_uid = '595d08b392ca9a000d0748df'
-  //The bottom two variables are being used
-  var  resizer = {  view: "resizer"  } //This just makes it easier to add the resizer at different locations
-  var BaseURL = 'http://candygram.neurology.emory.edu:8080/api/v1/'
-  //What does this function do??? First of all this is a function created in this script, it is not a function inherent to webix or javascript. 
-  //This seems to be used when selecting from the drop down select box.
-  //It must be supplied the id, which is what is used to pop-up in a message box, before I commented it out. 
-  function selectFolder(id) {
+  //Fox collection ID: 595d08b392ca9a000d0748df, used to identify where in candygram the fox images are (can be obtained from API)
+  //variables defined
+  var  resizer = {view: "resizer"} 
+  var BaseURL = 'http://candygram.neurology.emory.edu:8080/api/v1/' //url to access the API in general
+  var url_FoxTopLevel_Folders = 'http://candygram.neurology.emory.edu:8080/api/v1/folder?parentType=collection&parentId=595d08b392ca9a000d0748df&limit=50&sort=lowerName&sortdir=1' //json objects for each fox folder
+  var thumbHeight = 300; //can be changed depending on taste
+   
+  function selectFolder(id) { 
     var row = this.getPopup().getBody().getItem(id);
     $$("wbx_MainGrid").clearAll();
-    $$("wbx_MainGrid").load( ListItemsInGirderFolder( row['_id'])  );
-    //Note that the function above (inside the load) returns a url. This url contains json objects (many of them), with each object having an _id property
+    $$("wbx_MainGrid").load( ListItemsInGirderFolder(row['_id']));
   };
-//below is a sample directory for a fox subdirectory
-//http://candygram.neurology.emory.edu:8080/api/v1/item?folderId=595d0b9b92ca9a000dd5691d&limit=50&sort=lowerName&sortdir=1
-//This function is just a string concatenation function, retuns a url to load
+
+  //returns the json objects for a selected image set (a date)
   function ListItemsInGirderFolder( folderID) {
-    url = BaseURL + 'item?folderId=' + folderID + "&sort=lowerName&limit=50&sortdir=1"
-    return url
+    url = BaseURL + 'item?folderId=' + folderID + "&sort=lowerName&limit=50&sortdir=1";
+    return url;
   }
-  //Now that the functions have been set-up, predefine the webix containers to be used and edit easier down the line. 
+
   myHeader = {
     view: "template",
     type: "header",
-    template: "DSA SlideSorter Helper",
-    css:"standardDiv"
+    template: "Digital Slide Archive OCR Application",
   };
-  //This is the url for the top level folder, where the directories of each image date are located at. The previous url (those obtained from teh functions) are for each image inside those directories (I think)
-  url_FoxTopLevel_Folders = 'http://candygram.neurology.emory.edu:8080/api/v1/folder?parentType=collection&parentId=595d08b392ca9a000d0748df&limit=50&sort=lowerName&sortdir=1'
-  ImageURL = "http://candygram.neurology.emory.edu:8080/api/v1/item/595b7b4292ca9a000d071697/tiles/images/";
-  ImageBaseURL = "http://candygram.neurology.emory.edu:8080/api/v1/item/";
-  thumbHeight = 300;
-  currentOCRUrl = "https://www.zachleat.com/web/wp-content/uploads/2011/01/Screen-shot-2011-01-11-at-7.37.54-PM.png"
-
-  //I think this container is changed dynamically as different folders are selected
+ 
   wbx_FolderSelector = {
     view: "combo",
     id: "wbx_FolderSelector",
-    label: "Folder Select",
+    label: "select Folder",
     on: { //allows attaching custom handlers to inner events of the component
       onChange: selectFolder, //fires when the value of the control is changed
     },
     options: {
       body: {
-        template: "#name#",
+        template: "#name#", //this is the name of the top level fox folders (the date seen in combo box)
       }
     },
   }
-  //this function is definitely required to load the 
+
+  //loads the fox top level files
   webix.ready(function() {
-    var list = $$("wbx_FolderSelector").getPopup().getList();
+    var list = $$("wbx_FolderSelector").getPopup().getList(); //connects to combo box
     list.clearAll();
-    list.load(url_FoxTopLevel_Folders);
-    //loads json objects to list
-    //$$("wbx_FolderSelector").attachEvent("onAfterRender", function() {
-      //webix.message("DO SOMETHING!")
-      //this.getItem
-    //})
-    // webix.ajax("http://127.0.0.1:5000/getImage?imageURL="+currentOCRUrl, function(response) {
-    // // webix.ajax("http://127.0.0.1:5000/index", function(response) {
-    //   console.log(response);
-    //   var data = JSON.parse(response);
-    //   $$("outputOCR").parse(data);
-    // })
+    //list.load(url_FoxTopLevel_Folders);
+    webix.ajax().get(url_FoxTopLevel_Folders, function(data){
+      var json = JSON.parse(data);
+      list.parse(json);
+      $$("wbx_FolderSelector").setValue(json[0].id);
+    });
   });
-  //left panel that dynamically switches images displayed based on the file selected from the right panel datatable
-  /// Use Jquery to get the image    $("#myLabelImg").attr("src")  should update on click
+
+  //source is changed depending on the selection on right container
   wbx_MyImageSet = {
     view: "template",
     id: "wbx_MyImageSet",
-    // template: "<img id='labelImg' src='" + ImageURL + "label?height=" + thumbHeight + "' >"
-    template: "<img id='labelImg' src='https://www.zachleat.com/web/wp-content/uploads/2011/01/Screen-shot-2011-01-11-at-7.37.54-PM.png'>"
+    template: "<img id='labelImg' src=''>"
   }
+
   // Let's list the folders for the FOX Collection
   //the sort command coupled with the id allows for formatting of the datatable based ont he svs file. This is how it is able to load the data properly
   FoxFolderViewColList = [
@@ -103,25 +79,16 @@
     {id: "updated"},
     {id: "_id", sort: "string"}
   ]
-// inputImage = {
-//   view: "template",
-//   id: "inputImage",
-//   autoConfig: true,
-//   template: "<img id='sampleImg' src='https://www.zachleat.com/web/wp-content/uploads/2011/01/Screen-shot-2011-01-11-at-7.37.54-PM.png'>"
-// } 
+
   outputOCR = {
     view: "template",
     id: "outputOCR",
     template: "#sampleOutput#"
   }
 
-  wbx_ocr = {
-    cols: [ outputOCR ]
-  }
-
   //the left panel (not including the header)
   wbx_LeftMainPanel = {
-    rows: [ wbx_FolderSelector, wbx_MyImageSet, wbx_ocr]
+    rows: [ wbx_FolderSelector, wbx_MyImageSet, outputOCR]
   }
 
   wbx_MainGrid = {
@@ -134,23 +101,21 @@
     on: { //this will fire when selection is changed on datatable
       "onItemClick": function(id){
         DataForCurrentRow =   this.getItem(id);
-        webix.message(DataForCurrentRow);
-        currentImageURL = ImageBaseURL + DataForCurrentRow._id + "/tiles/images/label?height=" + thumbHeight;
-        // alert(currentImageURL)
+        currentImageURL = BaseURL + "item/" + DataForCurrentRow._id + "/tiles/images/label?height=" + thumbHeight;
         $("#labelImg").attr("src",currentImageURL);
+        //call the flask server and run ocr, displaying results on the correct container
         webix.ajax("http://127.0.0.1:5000/getImage?imageURL="+currentImageURL, function(response) {
           console.log(response);
           var data = JSON.parse(response);
           $$("outputOCR").parse(data);
         })
-        // currentOCRUrl = "http://www.myfreeocr.com/img/brading-bg.png";
       }
     }
   }
 
   wbx_RightMainPanel = {
     rows: [ //contains another header
-      {view:"template", type:"header",template: "DataGrid", css:"standardDiv"},
+      {view:"template", type:"header",template: "DataGrid"},
       wbx_MainGrid
     ]
   }

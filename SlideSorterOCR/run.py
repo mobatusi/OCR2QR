@@ -9,6 +9,7 @@ import imghdr
 from PIL import Image
 import pytesseract
 import os.path
+import os
 
 # from pytesseract import *
 #from PIL import Image
@@ -40,6 +41,7 @@ def getImage():
 		# text = os.path.abspath(im)
 		# text = pytesseract.image_to_string(im)
 		user['sampleOutput'] = text
+		os.remove(tempFile) #delete the temporary file 
 # 		# cors = CORS(im)
 # 		# CORS(app)
 # 		# CORS(im)
