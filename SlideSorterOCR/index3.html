@@ -23,11 +23,30 @@
   var BaseURL = 'http://candygram.neurology.emory.edu:8080/api/v1/' //url to access the API in general
   var url_FoxTopLevel_Folders = 'http://candygram.neurology.emory.edu:8080/api/v1/folder?parentType=collection&parentId=595d08b392ca9a000d0748df&limit=50&sort=lowerName&sortdir=1' //json objects for each fox folder
   var thumbHeight = 300; //can be changed depending on taste
+  var currentID = ''; //keeps track of the url of the selected image (for ocr)
+  var currentImageID = ''; //keeps track of the ID of the selected image (for getting metadata)
+  var output = '';
+  var currentOCR = '';
+  var currentImageURL = '';
+  // var currentImageU = '';
    
   function selectFolder(id) { 
+    // $$('wbx_outputOCR').setValues({sampleOutput:''});
+    $$('wbx_richOCR').setValue("");
+    $$('metaData').define("template","");
+    $$('metaData').refresh();
     var row = this.getPopup().getBody().getItem(id);
     $$("wbx_MainGrid").clearAll();
     $$("wbx_MainGrid").load( ListItemsInGirderFolder(row['_id']));
+    currentID = '';
+    currentOCR = null;
+    currentImageURL = '';
+    $("#labelImg").attr("src",'');
+    // $("#wbx_outputOCR").attr("template",'');
+    // $$("wbx_outputOCR").define({
+    //   template:""
+    // });
+    // $$("wbx_outputOCR").refresh();
   };
 
   //returns the json objects for a selected image set (a date)
@@ -63,6 +82,10 @@
 
   //loads the fox top level files
   webix.ready(function() {
+    webix.ajax("http://127.0.0.1:5000/", function(response) {
+        webix.message(response);
+    });
+    // $$('wbx_outputOCR').setValues({sampleOutput:''});
     var list = $$("wbx_FolderSelector").getPopup().getList(); //connects to combo box
     list.clearAll();
     //list.load(url_FoxTopLevel_Folders);
@@ -95,38 +118,125 @@
     {id: "_id", sort: "string"}
   ]
 
-  metadata_button = {
+  function runOCR(id) {
+    webix.ajax("http://127.0.0.1:5000/getImage?imageURL="+currentImageURL, function(response) {
+      // console.log(response);
+      var data = JSON.parse(response);
+      // console.log(data['sampleOutput']);
+      // $$("sampleTextbox").parse(data);
+      // console.log(data);
+      currentOCR = data;
+      // $$("wbx_outputOCR").parse(data);
+      $$("wbx_richOCR").setValue(currentOCR['sampleOutput']);
+    })
+  };
+
+  function getMetadata(id) {
+    webix.ajax("http://127.0.0.1:5000/getMetadata?imageID="+currentImageID, function(response) {
+      // console.log(response)
+      var data = JSON.parse(response);
+      // console.log(data)
+      // console.log(data);
+      if (data['bad_ocr_output'] != null) {
+        // console.log(data.hasOwnProperty('bad_ocr_hjhoutput'));
+        output = JSON.stringify(data['bad_ocr_output']);
+      } else {
+        output = "No current Metadata!";
+      };
+      // $$("metaData").parse(data);
+      $$('metaData').define("template",output);
+      $$('metaData').refresh();
+    });
+  };
+
+  function saveMetadata(id) {
+    currentOCR['sampleOutput'] = $$("wbx_richOCR").getValue();
+    // console.log($$("wbx_richOCR").getValue());
+    // console.log(currentOCR['sampleOutput']);
+    // console.log(currentOCR['metadata']);
+    if (currentOCR != null) {
+      webix.ajax("http://127.0.0.1:5000/updateMetadata?imageID="+currentImageID+"&ocr_output="+currentOCR['sampleOutput'], function(response) {
+        webix.message(response);
+      });
+      getMetadata(id);
+    } else {
+      webix.message("Please select and image and run OCR before attempting to save!");
+    };
+  };
+
+  save_button = {
     view:"button",
-    id:"metadata_button",
-    value:"Get Metadata",
-    // borderless:true
+    id:"save_button",
+    value:"Save OCR Output",
+    borderless:true,
+    type:"form",
+    align:"center",
+    click: saveMetadata
   }
+
+  // metadata_button = {
+  //   view:"button",
+  //   id:"metadata_button",
+  //   value:"Get Metadata",
+  //   borderless:true,
+  //   type:"form",
+  //   align: "center",
+  //   click: getMetadata
+  // }
 
   ocr_button = {
     view:"button", 
     id:"ocr_button", 
     value:"Run OCR", 
-    // type:"form", 
-    // align: "center",
+    type:"form", 
+    align: "center",
     // width: 500,
-    // borderless: true
-    // inputWidth:100 
+    borderless: true,
+    // inputWidth:100,
+    click: runOCR
+  }
+
+  metaData = {
+    rows: [
+      {view:"template", template:"Current Meta Data", type:"header"},
+      {view:"template",
+       id:"metaData",
+       template: ""}
+    ]
+  }
+
+  wbx_outputOCR = {
+    rows: [ 
+      {view:"template", id:"ocroutputHeader", template:"OCR Output", type:"header"},
+      // {view: "template",
+      // id: "wbx_outputOCR",
+      // borderless: true,
+      // template: "#sampleOutput#"},
+      {
+        view:"richtext", 
+        id:"wbx_richOCR", 
+        label:"OCR Output",
+        labelPosition:"top",
+        // margin:200,
+        value:"", 
+        // minWidth:$$("ocroutputHeader").$width
+        // width:300
+      }
+      // {view:"text", id:"sampleTextbox", value:"#sampleOutput#", label:""}
+    ]
+  }
+
+  output = {
+    cols: [wbx_outputOCR, metaData]
   }
 
   wbx_buttons = {
-    cols: [ocr_button, resizer, metadata_button]
-  }
-  
-  wbx_outputOCR = {
-    view: "template",
-    id: "wbx_outputOCR",
-    borderless: true,
-    template: "#sampleOutput#"
+    cols: [ocr_button, save_button] //metadata_button,
   }
 
   //the left panel (not including the header)
   wbx_LeftMainPanel = {
-    rows: [ wbx_FolderSelector, wbx_MyImageSet, wbx_buttons, wbx_outputOCR]
+    rows: [ wbx_FolderSelector, wbx_MyImageSet, wbx_buttons, output]
   }
 
   wbx_MainGrid = {
@@ -138,15 +248,16 @@
     select: "row",
     on: { //this will fire when selection is changed on datatable
       "onItemClick": function(id){
+      // "onSelectChange": function(id){ 
+        currentOCR = null;
+        $$('wbx_richOCR').setValue("");
+        // $$('wbx_outputOCR').setValues({sampleOutput:''});
         DataForCurrentRow =   this.getItem(id);
         currentImageURL = BaseURL + "item/" + DataForCurrentRow._id + "/tiles/images/label?height=" + thumbHeight;
         $("#labelImg").attr("src",currentImageURL);
-        //call the flask server and run ocr, displaying results on the correct container
-        webix.ajax("http://127.0.0.1:5000/getImage?imageURL="+currentImageURL, function(response) {
-          console.log(response);
-          var data = JSON.parse(response);
-          $$("wbx_outputOCR").parse(data);
-        })
+        currentID = currentImageURL;
+        currentImageID = DataForCurrentRow._id;
+        getMetadata(id);
       }
     }
   }

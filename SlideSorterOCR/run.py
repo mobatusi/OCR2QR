@@ -1,57 +1,68 @@
 #!env/bin/python
 from flask import Flask, request
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS #, cross_origin
 from flask import Response
 import json
-# from flask import request
 import urllib
 import imghdr
 from PIL import Image
-import pytesseract
-import os.path
-import os
-
-# from pytesseract import *
-#from PIL import Image
-# CORS(app)
-
+from pytesseract import image_to_string
+from os import path, remove
+import girder_client
 
 app = Flask(__name__)
 CORS(app)
-# cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 @app.route('/')
 def index():
-    user = {'imageURL': 'Miguel'} #fake user
-    return Response(json.dumps(user))
-    #this converts user into a json object
+    return "OCR is ready to run!"
 
 @app.route('/getImage')
 def getImage():
-	#url used for debugging: http://i.cdn.cnn.com/cnn/.element/img/4.0/subscription/Fareed_SubscriptionHub.jpg
 	#*urls with & have problems, seem to cut off the passed parameter url at the first occurance of &
-	user = {'imageURL': request.args.get('imageURL'), 'imageFlag': False, 'sampleOutput': None}
+	user = {'sampleOutput': ''}
 	tempFile = 'tempImage.jpg'
-	urllib.urlretrieve(user['imageURL'], tempFile)
+	urllib.urlretrieve(request.args.get('imageURL'), tempFile)
 	
 	if imghdr.what(tempFile) == 'jpeg': #if true then run ocr
-		user['imageFlag'] = True
-		tempImage = Image.open(os.path.abspath(tempFile))
-		text = pytesseract.image_to_string(tempImage)
-		# text = os.path.abspath(im)
-		# text = pytesseract.image_to_string(im)
+		tempImage = Image.open(path.abspath(tempFile))
+		text = image_to_string(tempImage)
 		user['sampleOutput'] = text
-		os.remove(tempFile) #delete the temporary file 
-# 		# cors = CORS(im)
-# 		# CORS(app)
-# 		# CORS(im)
-# 		# text = image_to_string(im) #runs OCR
-# 	# user['imageURL'] = 'test'
-# 	# if imghdr.what('/home/jc/Dropbox/Gutman_Lab/githubProjects/OCR2QR_jc/sample.png') == 'png':
-# 	# 	userURL['imageURL'] = 'true'
-# 	# else: 
-# 	# 	userURL['imageURL'] = 'false'
+		remove(tempFile) #delete the temporary file 
 
 	return Response(json.dumps(user))
+
+@app.route('/getMetadata')
+def getMetadata():
+	user2 = {'metadata':'no metadata present'}
+	#select appropriate API url. For fox image data it is candygram version 1
+	API_URL = "http://candygram.neurology.emory.edu:8080/api/v1"
+	#sign-in to the client using user & password
+	gc = girder_client.GirderClient(apiUrl=API_URL)
+	gc.authenticate(username="admin", password="password")
+	temp = request.args.get('imageID')
+	temp = "item/" + temp
+	user2['metadata'] = temp
+	item = gc.get(user2['metadata'])
+	if item.has_key('meta'):
+		item = item["meta"]
+	else:
+		item = {'bad_ocr_output':None}
+	user2['metadata'] = item
+	return Response(json.dumps(user2['metadata']))
+
+@app.route('/updateMetadata')
+def updateMetadata():
+	#select appropriate API url. For fox image data it is candygram version 1
+	API_URL = "http://candygram.neurology.emory.edu:8080/api/v1"
+	#sign-in to the client using user & password
+	gc = girder_client.GirderClient(apiUrl=API_URL)
+	gc.authenticate(username="admin", password="password")
+	temp = request.args.get('imageID')
+	temp = "item/" + temp + "/metadata"
+	print temp
+	item = gc.put(temp, json={"bad_ocr_output":request.args.get('ocr_output')})
+	return "Metadata was saved!"
+
 
 app.run(debug=True)
