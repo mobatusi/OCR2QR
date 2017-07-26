@@ -1,0 +1,83 @@
+<?php
+
+/* JPEGCam Test Script */
+/* Receives JPEG webcam submission and saves to local file. */
+/* Make sure your directory has permission to write files as your web server user! */
+
+$filename = date('YmdHis') . '.jpg';
+$result = file_put_contents( '/path/to/file/store/or/site/' . $filename, 
+      file_get_contents('php://input') );
+if (!$result) {
+    print "ERROR: Failed to write data to $filename, check permissions\n";
+    exit();
+}
+
+$url = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['REQUEST_URI']) . '/' 
+     . $filename;
+print "$url\n";
+
+?>
+
+
+
+import urllib
+from cStringIO import StringIO
+
+png_output = StringIO()
+canvas.print_png(png_output)
+data = png_output.getvalue().encode('base64')
+data_url = 'data:image/png;base64,{}'.format(urllib.quote(data.rstrip('\n')))
+
+import urllib
+from cStringIO import StringIO
+
+png_output = StringIO()
+canvas.print_png(png_output)
+data = png_output.getvalue().encode('base64')
+data_url = 'data:image/png;base64,{}'.format(urllib.quote(data.rstrip('\n')))
+
+
+
+from flask import Flask, render_template
+import urllib
+app = Flask(__name__)
+
+@app.route("/simple.png")
+def simple():
+    import datetime
+    import StringIO
+    import random
+
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    from matplotlib.figure import Figure
+    from matplotlib.dates import DateFormatter
+
+    fig=Figure()
+    ax=fig.add_subplot(111)
+    x=[]
+    y=[]
+    now=datetime.datetime.now()
+    delta=datetime.timedelta(days=1)
+    for i in range(10):
+        x.append(now)
+        now+=delta
+        y.append(random.randint(0, 1000))
+    ax.plot_date(x, y, '-')
+    ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    fig.autofmt_xdate()
+    canvas=FigureCanvas(fig)
+    png_output = StringIO.StringIO()
+    canvas.print_png(png_output)
+    png_output = png_output.getvalue().encode("base64")
+
+    return render_template("test.html", img_data=urllib.quote(png_output.rstrip('\n')))
+
+
+if __name__ == "__main__":
+    app.run()
+Template:
+
+<img src="data:image/png;base64,{{img_data}}"/>
+
+
+## Generating openSSL certificate openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout local.example.com.key -out local.example.com.key.crt

@@ -1,0 +1,284 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <link rel="stylesheet" href="../bower_components/webix/codebase/webix.css" type="text/css">
+  <script src="../bower_components/webix/codebase/webix.js" type="text/javascript"></script>
+  <script src="../bower_components/jquery/dist/jquery.js" type="text/javascript"></script>
+</head>
+
+<!-- <style>
+    .headerStyle  {
+        font-size: 14px;
+        font-style: bold;
+        background-color: grey;
+        color: white;
+    }
+</style> -->
+
+<body>
+  <script type="text/javascript" charset="utf-8">
+  //Fox collection ID: 595d08b392ca9a000d0748df, used to identify where in candygram the fox images are (can be obtained from API)
+  //variables defined
+  var  resizer = {view: "resizer"} 
+  var BaseURL = 'http://candygram.neurology.emory.edu:8080/api/v1/' //url to access the API in general
+  var url_FoxTopLevel_Folders = 'http://candygram.neurology.emory.edu:8080/api/v1/folder?parentType=collection&parentId=595d08b392ca9a000d0748df&limit=50&sort=lowerName&sortdir=1' //json objects for each fox folder
+  var thumbHeight = 300; //can be changed depending on taste
+  var currentID = ''; //keeps track of the url of the selected image (for ocr)
+  var currentImageID = ''; //keeps track of the ID of the selected image (for getting metadata)
+  var output = '';
+  var currentOCR = '';
+  var currentImageURL = '';
+  // var currentImageU = '';
+   
+  function selectFolder(id) { 
+    // $$('wbx_outputOCR').setValues({sampleOutput:''});
+    $$('wbx_richOCR').setValue("");
+    $$('metaData').define("template","");
+    $$('metaData').refresh();
+    var row = this.getPopup().getBody().getItem(id);
+    $$("wbx_MainGrid").clearAll();
+    $$("wbx_MainGrid").load( ListItemsInGirderFolder(row['_id']));
+    currentID = '';
+    currentOCR = null;
+    currentImageURL = '';
+    $("#labelImg").attr("src",'');
+    // $("#wbx_outputOCR").attr("template",'');
+    // $$("wbx_outputOCR").define({
+    //   template:""
+    // });
+    // $$("wbx_outputOCR").refresh();
+  };
+
+  //returns the json objects for a selected image set (a date)
+  function ListItemsInGirderFolder( folderID) {
+    url = BaseURL + 'item?folderId=' + folderID + "&sort=lowerName&limit=50&sortdir=1";
+    return url;
+  }
+
+  myHeader = {
+    view: "template",
+    type: "header",
+    // css: "headerStyle",
+    template: "Digital Slide Archive OCR Application",
+    // height: 26
+  };
+ 
+  wbx_FolderSelector = {
+    view: "combo",
+    css: "headerStyle",
+    id: "wbx_FolderSelector",
+    label: "Select Folder:",
+    labelWidth: 101,
+
+    on: { //allows attaching custom handlers to inner events of the component
+      onChange: selectFolder, //fires when the value of the control is changed
+    },
+    options: {
+      body: {
+        template: "#name#", //this is the name of the top level fox folders (the date seen in combo box)
+      }
+    },
+  }
+
+  //loads the fox top level files
+  webix.ready(function() {
+    webix.ajax("http://127.0.0.1:5000/", function(response) {
+        webix.message(response);
+    });
+    // $$('wbx_outputOCR').setValues({sampleOutput:''});
+    var list = $$("wbx_FolderSelector").getPopup().getList(); //connects to combo box
+    list.clearAll();
+    //list.load(url_FoxTopLevel_Folders);
+    webix.ajax().get(url_FoxTopLevel_Folders, function(data){
+      var json = JSON.parse(data);
+      list.parse(json);
+      $$("wbx_FolderSelector").setValue(json[0].id);
+    });
+  });
+
+  //source is changed depending on the selection on right container
+  wbx_MyImageSet = {
+    view: "template",
+    id: "wbx_MyImageSet",
+    borderless: true,
+    template: "<img id='labelImg' src=''>"
+  }
+
+  // Let's list the folders for the FOX Collection
+  //the sort command coupled with the id allows for formatting of the datatable based ont he svs file. This is how it is able to load the data properly
+  FoxFolderViewColList = [
+    { id: "imageThumb", template: function(obj) {
+      imgString = "<img src='" +BaseURL + "item/" + obj['_id'] + "/tiles/thumbnail?height=80&encoding=JPEG' >"
+      return imgString
+      },
+    }, 
+    {id: "name", sort: "string"},
+    {id: "size", sort: "int"},
+    {id: "updated"},
+    {id: "_id", sort: "string"}
+  ]
+
+  function runOCR(id) {
+    webix.ajax("http://127.0.0.1:5000/getImage?imageURL="+currentImageURL, function(response) {
+      // console.log(response);
+      var data = JSON.parse(response);
+      // console.log(data['sampleOutput']);
+      // $$("sampleTextbox").parse(data);
+      // console.log(data);
+      currentOCR = data;
+      // $$("wbx_outputOCR").parse(data);
+      $$("wbx_richOCR").setValue(currentOCR['sampleOutput']);
+    })
+  };
+
+  function getMetadata(id) {
+    webix.ajax("http://127.0.0.1:5000/getMetadata?imageID="+currentImageID, function(response) {
+      // console.log(response)
+      var data = JSON.parse(response);
+      // console.log(data)
+      // console.log(data);
+      if (data['bad_ocr_output'] != null) {
+        // console.log(data.hasOwnProperty('bad_ocr_hjhoutput'));
+        output = JSON.stringify(data['bad_ocr_output']);
+      } else {
+        output = "No current Metadata!";
+      };
+      // $$("metaData").parse(data);
+      $$('metaData').define("template",output);
+      $$('metaData').refresh();
+    });
+  };
+
+  function saveMetadata(id) {
+    currentOCR['sampleOutput'] = $$("wbx_richOCR").getValue();
+    // console.log($$("wbx_richOCR").getValue());
+    // console.log(currentOCR['sampleOutput']);
+    // console.log(currentOCR['metadata']);
+    if (currentOCR != null) {
+      webix.ajax("http://127.0.0.1:5000/updateMetadata?imageID="+currentImageID+"&ocr_output="+currentOCR['sampleOutput'], function(response) {
+        webix.message(response);
+      });
+      getMetadata(id);
+    } else {
+      webix.message("Please select and image and run OCR before attempting to save!");
+    };
+  };
+
+  save_button = {
+    view:"button",
+    id:"save_button",
+    value:"Save OCR Output",
+    borderless:true,
+    type:"form",
+    align:"center",
+    click: saveMetadata
+  }
+
+  // metadata_button = {
+  //   view:"button",
+  //   id:"metadata_button",
+  //   value:"Get Metadata",
+  //   borderless:true,
+  //   type:"form",
+  //   align: "center",
+  //   click: getMetadata
+  // }
+
+  ocr_button = {
+    view:"button", 
+    id:"ocr_button", 
+    value:"Run OCR", 
+    type:"form", 
+    align: "center",
+    // width: 500,
+    borderless: true,
+    // inputWidth:100,
+    click: runOCR
+  }
+
+  metaData = {
+    rows: [
+      {view:"template", template:"Current Meta Data", type:"header"},
+      {view:"template",
+       id:"metaData",
+       template: ""}
+    ]
+  }
+
+  wbx_outputOCR = {
+    rows: [ 
+      {view:"template", id:"ocroutputHeader", template:"OCR Output", type:"header"},
+      // {view: "template",
+      // id: "wbx_outputOCR",
+      // borderless: true,
+      // template: "#sampleOutput#"},
+      {
+        view:"richtext", 
+        id:"wbx_richOCR", 
+        label:"OCR Output",
+        labelPosition:"top",
+        // margin:200,
+        value:"", 
+        // minWidth:$$("ocroutputHeader").$width
+        // width:300
+      }
+      // {view:"text", id:"sampleTextbox", value:"#sampleOutput#", label:""}
+    ]
+  }
+
+  output = {
+    cols: [wbx_outputOCR, metaData]
+  }
+
+  wbx_buttons = {
+    cols: [ocr_button, save_button] //metadata_button,
+  }
+
+  //the left panel (not including the header)
+  wbx_LeftMainPanel = {
+    rows: [ wbx_FolderSelector, wbx_MyImageSet, wbx_buttons, output]
+  }
+
+  wbx_MainGrid = {
+    view:"datatable",
+    id: "wbx_MainGrid",
+    autoConfig: true,
+    columns: FoxFolderViewColList,
+    rowHeight: 100,
+    select: "row",
+    on: { //this will fire when selection is changed on datatable
+      "onItemClick": function(id){
+      // "onSelectChange": function(id){ 
+        currentOCR = null;
+        $$('wbx_richOCR').setValue("");
+        // $$('wbx_outputOCR').setValues({sampleOutput:''});
+        DataForCurrentRow =   this.getItem(id);
+        currentImageURL = BaseURL + "item/" + DataForCurrentRow._id + "/tiles/images/label?height=" + thumbHeight;
+        $("#labelImg").attr("src",currentImageURL);
+        currentID = currentImageURL;
+        currentImageID = DataForCurrentRow._id;
+        getMetadata(id);
+      }
+    }
+  }
+
+  wbx_RightMainPanel = {
+    rows: [ //contains another header
+      {view:"template", type:"header",template: "DataGrid"},
+      wbx_MainGrid
+    ]
+  }
+  
+  //main ui
+  webix.ui({
+    //This ui is a 2 rows (first is just the header) with the last row being split into 2 columns.
+    rows: [
+      myHeader, //the simple header, this is static
+      {
+        cols: [ wbx_LeftMainPanel, wbx_RightMainPanel ]
+      },
+    ]
+  });
+  </script>
+</body>
+</html>
