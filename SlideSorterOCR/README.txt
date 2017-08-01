@@ -15,3 +15,13 @@ The virtual environment will need to have these packages to run properly:
 	tesseract-ocr (important!)
 
 index.html is set-up to work with bower installed jquery and webix libraries but can be switched to work with cdn.
+
+To run the widget appropriately:
+	Initiate local host environment: python -m SimpleHTTPServer
+		recommended to initiate it in the directory with index.html file
+	Activate virtual environment: source env/bin/activate
+	Run the flask environment in the activated virtual environment: python run.py
+		make sure this runs on localhost 5000
+	Run index.html on local host server (usually 8000): localhost:8000/index.html
+
+

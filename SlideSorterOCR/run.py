@@ -9,6 +9,11 @@ from PIL import Image
 from pytesseract import image_to_string
 from os import path, remove
 import girder_client
+#Dolu updated OCR script, import new packages
+import ctypes
+import gc
+import scipy
+from skimage import filters
 
 app = Flask(__name__)
 CORS(app)
@@ -22,15 +27,27 @@ def getImage():
 	#*urls with & have problems, seem to cut off the passed parameter url at the first occurance of &
 	user = {'sampleOutput': ''}
 	tempFile = 'tempImage.jpg'
-	urllib.urlretrieve(request.args.get('imageURL'), tempFile)
+	try:
+		urllib.urlretrieve(request.args.get('imageURL'), tempFile)
 	
-	if imghdr.what(tempFile) == 'jpeg': #if true then run ocr
-		tempImage = Image.open(path.abspath(tempFile))
-		text = image_to_string(tempImage)
-		user['sampleOutput'] = text
-		remove(tempFile) #delete the temporary file 
+		if imghdr.what(tempFile) == 'jpeg': #if true then run ocr
+			tempImage = Image.open(path.abspath(tempFile)).convert('L') #convert to grayscale
+			#conver image to ndarray
+			tempImage_array = scipy.misc.fromimage(tempImage) 
+			#perform Otsu's thresholding
+			thresh = filters.threshold_otsu(tempImage_array)
+			#pixels w/ intensity greater than threshold are kept
+			im_thresh = tempImage_array > thresh
+			#im_thresh is converted from ndarray to image
+			im_thresh = scipy.misc.toimage(im_thresh)
+			text = image_to_string(im_thresh)
+			user['sampleOutput'] = text
+			remove(tempFile) #delete the temporary file 
 
-	return Response(json.dumps(user))
+		return Response(json.dumps(user))
+	except: 
+		user['sampleOutput'] = None
+		return Response(json.dumps(user))
 
 @app.route('/getMetadata')
 def getMetadata():
@@ -41,6 +58,7 @@ def getMetadata():
 	gc = girder_client.GirderClient(apiUrl=API_URL)
 	gc.authenticate(username="admin", password="password")
 	temp = request.args.get('imageID')
+	print 'The current image id is ',temp
 	temp = "item/" + temp
 	user2['metadata'] = temp
 	item = gc.get(user2['metadata'])
