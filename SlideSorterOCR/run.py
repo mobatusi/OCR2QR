@@ -1,4 +1,4 @@
-#!env/bin/python
+#!env2/bin/python
 from flask import Flask, request
 from flask_cors import CORS #, cross_origin
 from flask import Response
@@ -14,6 +14,9 @@ import ctypes
 import gc
 import scipy
 from skimage import filters
+import re
+import json
+# import pprint
 
 app = Flask(__name__)
 CORS(app)
@@ -26,28 +29,50 @@ def index():
 def getImage():
 	#*urls with & have problems, seem to cut off the passed parameter url at the first occurance of &
 	user = {'sampleOutput': ''}
-	tempFile = 'tempImage.jpg'
+	thresh = 95 #the threshold for the black and white conversion
+	cropParams = [70,0,425,300]
+	currentURL = request.args.get('imageURL')[:len(request.args.get('imageURL'))-3]+'500'
 	try:
-		urllib.urlretrieve(request.args.get('imageURL'), tempFile)
+		urllib.urlretrieve(currentURL, 'temp.jpg')
 	
-		if imghdr.what(tempFile) == 'jpeg': #if true then run ocr
-			tempImage = Image.open(path.abspath(tempFile)).convert('L') #convert to grayscale
-			#conver image to ndarray
-			tempImage_array = scipy.misc.fromimage(tempImage) 
-			#perform Otsu's thresholding
-			thresh = filters.threshold_otsu(tempImage_array)
-			#pixels w/ intensity greater than threshold are kept
-			im_thresh = tempImage_array > thresh
-			#im_thresh is converted from ndarray to image
-			im_thresh = scipy.misc.toimage(im_thresh)
-			text = image_to_string(im_thresh)
-			user['sampleOutput'] = text
-			remove(tempFile) #delete the temporary file 
+		if imghdr.what('temp.jpg') == 'jpeg': #if true then run ocr
+			img = Image.open(file('temp.jpg', 'rb'))
+			img = img.crop(cropParams)
+
+			R, G, B = img.convert('RGB').split()
+        	r = R.load()
+        	g = G.load()
+        	b = B.load()
+        	w, h = img.size
+
+        	# Convert non-black pixels to white
+        	for i in range(w):
+        		for j in range(h):
+        			if(r[i, j] > thresh or g[i, j] > thresh or b[i, j] > thresh):
+        				r[i, j] = 255 # Just change R channel
+
+        	img = Image.merge('RGB', (R, R, R))
+        	img.save('temp.jpg')
+
+        	img = Image.open('temp.jpg')
+        	# remove('temp.jpg') #remove the file
+        	text = image_to_string(img) #perform ocr on the tailored image
+        	#do regex to remove any unwanted spaces or strange characters
+
+        	text = re.sub('([^0-9a-zA-Z\:\s\/])+','', text)
+        	text = re.sub('\.',' ', text)
+        	text = re.sub('(\s{1,}|\n)',' ',text)
+        	text =re.sub(r'.(?i)*Fox', 'Fox', text)
+        	if  text[0:3] != 'Fox':
+        		text = re.sub(r'.(?i)*Col', 'Col', text)
+        	# print 'This is the output after regex',text
+        	user['sampleOutput'] = text
 
 		return Response(json.dumps(user))
+		
 	except: 
 		user['sampleOutput'] = None
-		return Response(json.dumps(user))
+        return Response(json.dumps(user))
 
 @app.route('/getMetadata')
 def getMetadata():
@@ -58,14 +83,14 @@ def getMetadata():
 	gc = girder_client.GirderClient(apiUrl=API_URL)
 	gc.authenticate(username="admin", password="password")
 	temp = request.args.get('imageID')
-	print 'The current image id is ',temp
+	# print 'The current image id is ',temp
 	temp = "item/" + temp
 	user2['metadata'] = temp
-	item = gc.get(user2['metadata'])
+	item = gc.get(user2['metadata']) #this is giving an input like: item/'fjakdfj88989df'
 	if item.has_key('meta'):
 		item = item["meta"]
 	else:
-		item = {'bad_ocr_output':None}
+		item = {'ocr_output':None}
 	user2['metadata'] = item
 	return Response(json.dumps(user2['metadata']))
 
@@ -77,10 +102,32 @@ def updateMetadata():
 	gc = girder_client.GirderClient(apiUrl=API_URL)
 	gc.authenticate(username="admin", password="password")
 	temp = request.args.get('imageID')
-	temp = "item/" + temp + "/metadata"
-	print temp
-	item = gc.put(temp, json={"bad_ocr_output":request.args.get('ocr_output')})
+	# temp = "item/" + temp + "/metadata"
+	# print temp
+	# item = gc.put(temp, json={"ocr_output":request.args.get('ocr_output')})
+	gc.addMetadataToItem(temp,{'ocr_output':request.args.get('ocr_output')})
+
 	return "Metadata was saved!"
+
+@app.route('/updateMetadataGroup')
+def updateMetadataGroup():
+	imageID = request.args.get('imageID')
+	textID = request.args.get('textID')
+	print len(textID)
+	textValue = request.args.get('textValue')
+	#select appropriate API url. For fox image data it is candygram version 1
+	API_URL = "http://candygram.neurology.emory.edu:8080/api/v1"
+	#sign-in to the client using user & password
+	gc = girder_client.GirderClient(apiUrl=API_URL)
+	gc.authenticate(username="admin", password="password")
+	groups = gc.getItem(imageID)['meta']
+	if groups.has_key('groups'):
+		groups = groups['groups']
+		groups[textID] = textValue
+		gc.addMetadataToItem(imageID,{'groups':groups})
+		return "Metadata was saved!"
+	else:
+		return "This slide has no groups meta data currently"
 
 
 app.run(debug=True)

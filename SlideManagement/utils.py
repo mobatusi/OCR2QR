@@ -1,7 +1,8 @@
+from pprint import pprint
+
 def recurseGetItems(client, folderId):
     items = list(recurseGetResource(client, folderId, 'item'))
     folders = recurseGetResource(client, folderId, 'folder')
-    
     for folder in folders:
         tmp = recurseGetItems(client, folder["_id"])
         items += list(tmp)
@@ -57,7 +58,7 @@ def recurseGetResource(client, parentId, resourceType, parentType='folder'):
     #folderIdList is an iterator and can only be consumed once. Do not move it up in the function
     folderIdList = getField(folders, '_id')
 
-    ### The recursion does NOT work if you start with a collection.. probably iwll work if it's a folder.
+    ### The recursion does NOT work if you start with a collection.. probably will work if it's a folder.
     for folderId in folderIdList:
         #if re
         resourceList.extend(recurseGetResource(client, folderId, resourceType))
