@@ -6,6 +6,12 @@
   <script src="bower_components/jquery/dist/jquery.js" type="text/javascript"></script>
 </head>
 
+ <style>
+   .my_style  {
+     font-style: bold;
+    }
+ </style>
+
 <body>
   <script type="text/javascript" charset="utf-8">
   //Fox collection ID: 595d08b392ca9a000d0748df
@@ -39,6 +45,8 @@
     });
     // $$("wbx_MainGrid").load( ListItemsInGirderFolder(row['_id']));
     currentOCR['sampleOutput'] = '';
+    $$("BrainID").setValue(null);$$("Column").setValue(null);$$("Hemi").setValue(null);
+    $$("Section").setValue(null);$$("Stain").setValue(null);$$("StainDate").setValue(null);
     currentImageURL = '';
     $("#labelImg").attr("src",'');
   };
@@ -88,11 +96,45 @@
 
   //source is changed depending on the selection on right container
   wbx_MyImageSet = {
-    view: "template",
-    id: "wbx_MyImageSet",
-    borderless: true,
-    template: "<img id='labelImg' src=''>"
+    cols: [
+      {view: "template",
+      id: "wbx_MyImageSet",
+      borderless: true,
+      template: "<img id='labelImg' src=''>"
+      },
+      {
+        rows: [
+          {cols: [
+            {view:"button", id:"BrainIDB", value:"Update", borderless:true, autowidth:true, click:updateGroups},
+            {view:"text", id:"BrainID", label:'BrainID', labelPosition:"top", value:""}
+          ]},
+          {cols: [
+            {view:"button", id:"ColumnB", value:"Update", borderless:true,autowidth:true, click:updateGroups},
+            {view:"text", id:"Column", label:'Column', labelPosition:"top", value:""}
+          ]},
+          {cols: [
+            {view:"button", id:"HemiB", value:"Update", borderless:true,autowidth:true, click:updateGroups},
+            {view:"text", id:"Hemi", label:'Hemi', labelPosition:"top", value:""}
+          ]},
+          {cols: [
+            {view:"button", id:"SectionB", value:"Update", borderless:true,autowidth:true, click:updateGroups},
+            {view:"text", id:"Section", label:'Section', labelPosition:"top", value:""}
+          ]},
+          {cols: [
+            {view:"button", id:"StainB", value:"Update", borderless:true,autowidth:true, click:updateGroups},
+            {view:"text", id:"Stain", label:'Stain', labelPosition:"top", value:""}
+          ]},
+          {cols: [
+            {view:"button", id:"StainDateB", value:"Update", borderless:true,autowidth:true, click:updateGroups},
+            {view:"text", id:"StainDate", label:'StainDate', labelPosition:"top", value:""}
+          ]},
+          {view:"button",id:"AllButton", value:"UPDATE ALL GROUPS"}//,click:updateAllGroups}
+        ]
+      }
+    ]
   }
+
+  groupTags = ['BrainID', 'Column', 'Hemi', 'Section', 'Stain', 'StainDate'];
 
   // Let's list the folders for the FOX Collection
   //the sort command coupled with the id allows for formatting of the datatable based ont he svs file. This is how it is able to load the data properly
@@ -112,7 +154,7 @@
     if(currentImageURL.length > 0) {
       webix.ajax("http://127.0.0.1:5000/getImage?imageURL="+currentImageURL, function(response) {
         var data = JSON.parse(response);
-        data['sampleOutput'] = removeSpecialChars(data['sampleOutput']);
+        // data['sampleOutput'] = removeSpecialChars(data['sampleOutput']);
         currentOCR = data;
         $$("wbx_richOCR").setValue(currentOCR['sampleOutput']);
       })
@@ -121,29 +163,35 @@
     };
   };
 
-  function removeSpecialChars(str) {
-  return str.replace(/(?!\w|\/|\.|\s)./g, '')
-    .replace(/\s+/g, ' ')
-    .replace(/^(\s*)([\W\w]*)(\b\s*$)/g, '$2');
-}
+//   function removeSpecialChars(str) {
+//   return str.replace(/(?!\w|\/|\.|\s)./g, '')
+//     .replace(/\s+/g, ' ')
+//     .replace(/^(\s*)([\W\w]*)(\b\s*$)/g, '$2');
+// }
 
   function getMetadata(id) {
     webix.ajax("http://127.0.0.1:5000/getMetadata?imageID="+currentImageID, function(response) {
       var data = JSON.parse(response);
-      if (data['bad_ocr_output'] != null) {
-        output = data.bad_ocr_output;
+      if (data != null) {
+        output = data;
       } else {
         output = "No current Metadata!";
       };
-      $$('metaData').define("template",output);
+      $$('metaData').define("template",output.ocr_output);
       $$('metaData').refresh();
+      $$("BrainID").setValue(output.groups.BrainID);
+      $$("Column").setValue(output.groups.Column);
+      $$("Hemi").setValue(output.groups.Hemi);
+      $$("Section").setValue(output.groups.Section);
+      $$("Stain").setValue(output.groups.Stain);
+      $$("StainDate").setValue(output.groups.StainDate);
     });
   };
 
   function saveMetadata(id) {
     currentOCR['sampleOutput'] = $$("wbx_richOCR").getValue();
     console.log(currentOCR['sampleOutput']);
-    currentOCR['sampleOutput'].replace(/ {2,}/g, '');
+    // currentOCR['sampleOutput'].replace(/ {2,}/g, '');
     console.log(currentOCR['sampleOutput']);
 
     if (currentOCR['sampleOutput'].length > 0) {
@@ -155,6 +203,28 @@
       webix.message("Please select and image and run OCR before attempting to save!");
     };
   };
+
+
+  function updateGroups(id) { //id is the label, and currentID is the id of the text box
+      textID = id.substring(0,id.length-1);
+      textValue =$$(textID).getValue();
+      console.log(textID);
+      console.log(textValue);
+      webix.ajax("http://127.0.0.1:5000/updateMetadataGroup?imageID="+currentImageID+"&textID="+textID+"&textValue="+textValue, function(response) {
+        webix.message(response);
+      });
+  }
+
+  function updateAllGroups(id) { //id is the label, and currentID is the id of the text box
+      textID = id.substring(0,id.length-1);
+      textValue = [$$('BrainID').getValue(),$$('Column').getValue(),$$('Section').getValue(),$$('Hemi').getValue(),$$('Stain').getValue(),$$('StainDate').getValue()];
+      console.log(textID);
+      console.log(textValue);
+      webix.ajax("http://127.0.0.1:5000/updateMetadataGroup?imageID="+currentImageID+"&textID="+textID+"&textValue="+textValue, function(response) {
+        webix.message(response);
+      });
+  }
+
 
   save_button = {
     view:"button",
