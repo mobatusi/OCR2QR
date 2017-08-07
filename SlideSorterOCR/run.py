@@ -7,15 +7,16 @@ import urllib
 import imghdr
 from PIL import Image
 from pytesseract import image_to_string
-from os import path, remove
+# from os import path, remove
 import girder_client
 #Dolu updated OCR script, import new packages
-import ctypes
-import gc
-import scipy
+# import ctypes
+# import gc
+# import scipy
 from skimage import filters
-import re
-import json
+# import re
+# import json
+import time
 # import pprint
 
 app = Flask(__name__)
@@ -125,6 +126,7 @@ def updateMetadataGroup():
 		groups = groups['groups']
 		groups[textID] = textValue
 		gc.addMetadataToItem(imageID,{'groups':groups})
+		# time.sleep(5)
 		return "Metadata was saved!"
 	else:
 		return "This slide has no groups meta data currently"
