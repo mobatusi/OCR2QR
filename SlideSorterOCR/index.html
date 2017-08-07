@@ -209,7 +209,9 @@
         webix.message(response);
         
         var cid = $$("wbx_MainGrid").getSelectedId();
+        console.log(cid);
         var item = $$("wbx_MainGrid").getItem(cid.row);
+        cid.column = textID;
         item[cid.column] = textValue;
         $$("wbx_MainGrid").updateItem(cid.row, item);
       });
