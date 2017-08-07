@@ -24,13 +24,13 @@
   var currentOCR = [];
   currentOCR['sampleOutput'] = ''; //the current OCR saved in the API
   var currentImageURL = ''; //
-   
+  var row = '';
   // 
   function selectFolder(id) { //when folder is switched
     $$('wbx_richOCR').setValue(""); //blanks OCR output container
     $$('metaData').define("template",""); //blanks current metadata container
     $$('metaData').refresh();
-    var row = this.getPopup().getBody().getItem(id);
+    row = this.getPopup().getBody().getItem(id);
     $$("wbx_MainGrid").clearAll();
     //don't load any files that don't have valid images
     $.getJSON(ListItemsInGirderFolder(row['_id']), function(json) {
@@ -50,13 +50,11 @@
     currentImageURL = '';
     $("#labelImg").attr("src",'');
   };
-
   //returns the json objects for a selected image set (a date)
   function ListItemsInGirderFolder( folderID) {
     url = BaseURL + 'item?folderId=' + folderID + "&sort=lowerName&limit=50&sortdir=1";
     return url;
   }
-
   myHeader = {
     view: "template",
     type: "header",
@@ -69,7 +67,6 @@
     id: "wbx_FolderSelector",
     label: "Select Folder:",
     labelWidth: 101,
-
     on: { //allows attaching custom handlers to inner events of the component
       onChange: selectFolder, //fires when the value of the control is changed
     },
@@ -79,7 +76,6 @@
       }
     },
   }
-
   //loads the fox top level files
   webix.ready(function() {
     webix.ajax("http://127.0.0.1:5000/", function(response) {
@@ -92,8 +88,8 @@
       list.parse(json);
       $$("wbx_FolderSelector").setValue(json[0].id);
     });
+    $$("AllButton").disable();
   });
-
   //source is changed depending on the selection on right container
   wbx_MyImageSet = {
     cols: [
@@ -133,21 +129,26 @@
       }
     ]
   }
-
   groupTags = ['BrainID', 'Column', 'Hemi', 'Section', 'Stain', 'StainDate'];
-
   // Let's list the folders for the FOX Collection
   //the sort command coupled with the id allows for formatting of the datatable based ont he svs file. This is how it is able to load the data properly
   FoxFolderViewColList = [
+    // { [{id:"ocr_output",sort:"string"}]},
     { id: "imageThumb", template: function(obj) {
       imgString = "<img src='" +BaseURL + "item/" + obj['_id'] + "/tiles/thumbnail?height=80&encoding=JPEG' >"
       return imgString
       },
     }, 
+    {id: "BrainID", sort:"string"},
+    {id: "Hemi", sort:"string"},
+    {id: "Column", sort:"string"},
+    {id: "Section", sort:"string"},
+    {id: "Stain", sort:"string"},
+    {id: "StainDate", sort:"string"},
     {id: "name", sort: "string"},
+    {id: "_id", sort: "string"},
     {id: "size", sort: "int"},
-    {id: "updated"},
-    {id: "_id", sort: "string"}
+    {id: "updated"}
   ]
 
   function runOCR(id) {
@@ -162,13 +163,11 @@
       webix.message("Please select a file from the right first.");
     };
   };
-
 //   function removeSpecialChars(str) {
 //   return str.replace(/(?!\w|\/|\.|\s)./g, '')
 //     .replace(/\s+/g, ' ')
 //     .replace(/^(\s*)([\W\w]*)(\b\s*$)/g, '$2');
 // }
-
   function getMetadata(id) {
     webix.ajax("http://127.0.0.1:5000/getMetadata?imageID="+currentImageID, function(response) {
       var data = JSON.parse(response);
@@ -187,13 +186,11 @@
       $$("StainDate").setValue(output.groups.StainDate);
     });
   };
-
   function saveMetadata(id) {
     currentOCR['sampleOutput'] = $$("wbx_richOCR").getValue();
     console.log(currentOCR['sampleOutput']);
     // currentOCR['sampleOutput'].replace(/ {2,}/g, '');
     console.log(currentOCR['sampleOutput']);
-
     if (currentOCR['sampleOutput'].length > 0) {
       webix.ajax("http://127.0.0.1:5000/updateMetadata?imageID="+currentImageID+"&ocr_output="+currentOCR['sampleOutput'], function(response) {
         webix.message(response);
@@ -203,15 +200,18 @@
       webix.message("Please select and image and run OCR before attempting to save!");
     };
   };
-
-
   function updateGroups(id) { //id is the label, and currentID is the id of the text box
       textID = id.substring(0,id.length-1);
       textValue =$$(textID).getValue();
-      console.log(textID);
-      console.log(textValue);
+      // console.log(textID);
+      // console.log(textValue);
       webix.ajax("http://127.0.0.1:5000/updateMetadataGroup?imageID="+currentImageID+"&textID="+textID+"&textValue="+textValue, function(response) {
         webix.message(response);
+        
+        var cid = $$("wbx_MainGrid").getSelectedId();
+        var item = $$("wbx_MainGrid").getItem(cid.row);
+        item[cid.column] = textValue;
+        $$("wbx_MainGrid").updateItem(cid.row, item);
       });
   }
 
@@ -224,8 +224,6 @@
         webix.message(response);
       });
   }
-
-
   save_button = {
     view:"button",
     id:"save_button",
@@ -235,7 +233,6 @@
     align:"center",
     click: saveMetadata
   }
-
   ocr_button = {
     view:"button", 
     id:"ocr_button", 
@@ -245,7 +242,6 @@
     borderless: true,
     click: runOCR
   }
-
   metaData = {
     rows: [
       {view:"template", template:"Current Meta Data", type:"header"},
@@ -254,7 +250,6 @@
        template: ""}
     ]
   }
-
   wbx_outputOCR = {
     rows: [ 
       {view:"template", id:"ocroutputHeader", template:"OCR Output", type:"header"},
@@ -267,20 +262,16 @@
       }
     ]
   }
-
   output = {
     cols: [wbx_outputOCR, metaData]
   }
-
   wbx_buttons = {
     cols: [ocr_button, save_button] //metadata_button,
   }
-
   //the left panel (not including the header)
   wbx_LeftMainPanel = {
     rows: [ wbx_FolderSelector, wbx_MyImageSet, wbx_buttons, output]
   }
-
   wbx_MainGrid = {
     view:"datatable",
     id: "wbx_MainGrid",
@@ -288,6 +279,14 @@
     columns: FoxFolderViewColList,
     rowHeight: 100,
     select: "row",
+    map: {
+      'BrainID': "#meta.groups.BrainID#",
+      'Column': "#meta.groups.Column#",
+      'Hemi': "#meta.groups.Hemi#",
+      'Section': "#meta.groups.Section#",
+      'Stain': "#meta.groups.Stain#",
+      'StainDate': "#meta.groups.StainDate#"
+    },
     on: { //this will fire when selection is changed on datatable
       "onItemClick": function(id){
         currentOCR['sampleOutput'] = '';
@@ -300,7 +299,6 @@
       }
     }
   }
-
   wbx_RightMainPanel = {
     rows: [ //contains another header
       {view:"template", type:"header",template: "DataGrid"},
