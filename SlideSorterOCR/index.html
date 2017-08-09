@@ -25,6 +25,7 @@
   currentOCR['sampleOutput'] = ''; //the current OCR saved in the API
   var currentImageURL = ''; //
   var row = '';
+  var code = 13;
   // 
   function selectFolder(id) { //when folder is switched
     $$('wbx_richOCR').setValue(""); //blanks OCR output container
@@ -58,14 +59,14 @@
   myHeader = {
     view: "template",
     type: "header",
-    template: "Digital Slide Archive OCR Application",
+    template: "DIGITAL SLIDE ARCHIVE: OCR & Slide Metadata Management App",
   };
  
   wbx_FolderSelector = {
     view: "combo",
     css: "headerStyle",
     id: "wbx_FolderSelector",
-    label: "Select Folder:",
+    label: "Folder Selected:",
     labelWidth: 101,
     on: { //allows attaching custom handlers to inner events of the component
       onChange: selectFolder, //fires when the value of the control is changed
@@ -78,6 +79,7 @@
   }
   //loads the fox top level files
   webix.ready(function() {
+    webix.message("App is loading, wait for confirmation");
     webix.ajax("http://127.0.0.1:5000/", function(response) {
         webix.message(response);
     });
@@ -88,7 +90,7 @@
       list.parse(json);
       $$("wbx_FolderSelector").setValue(json[0].id);
     });
-    $$("AllButton").disable();
+    // $$("AllButton").disable();
   });
   //source is changed depending on the selection on right container
   wbx_MyImageSet = {
@@ -102,29 +104,71 @@
         rows: [
           {cols: [
             {view:"button", id:"BrainIDB", value:"Update", borderless:true, autowidth:true, click:updateGroups},
-            {view:"text", id:"BrainID", label:'BrainID', labelPosition:"top", value:""}
-          ]},
-          {cols: [
-            {view:"button", id:"ColumnB", value:"Update", borderless:true,autowidth:true, click:updateGroups},
-            {view:"text", id:"Column", label:'Column', labelPosition:"top", value:""}
+            {view:"text", id:"BrainID", label:'BrainID', labelPosition:"top", value:"",
+              on: {"onKeyPress": function(code, e,id) {
+                  if (code == 13) {
+                    updateGroups($$("BrainIDB").config.id)
+                  }
+                }
+              }
+            }
           ]},
           {cols: [
             {view:"button", id:"HemiB", value:"Update", borderless:true,autowidth:true, click:updateGroups},
-            {view:"text", id:"Hemi", label:'Hemi', labelPosition:"top", value:""}
+            {view:"text", id:"Hemi", label:'Hemi', labelPosition:"top", value:"",
+              on: {"onKeyPress": function(code, e,id) {
+                  if (code == 13) {
+                    updateGroups($$("HemiB").config.id)
+                  }
+                }
+              }
+            }
+          ]},
+          {cols: [
+            {view:"button", id:"ColumnB", value:"Update", borderless:true,autowidth:true, click:updateGroups},
+            {view:"text", id:"Column", label:'Column', labelPosition:"top", value:"",
+              on: {"onKeyPress": function(code, e,id) {
+                  if (code == 13) {
+                    updateGroups($$("ColumnB").config.id)
+                  }
+                }
+              }
+            }
           ]},
           {cols: [
             {view:"button", id:"SectionB", value:"Update", borderless:true,autowidth:true, click:updateGroups},
-            {view:"text", id:"Section", label:'Section', labelPosition:"top", value:""}
+            {view:"text", id:"Section", label:'Section', labelPosition:"top", value:"",
+              on: {"onKeyPress": function(code, e,id) {
+                  if (code == 13) {
+                    updateGroups($$("SectionB").config.id)
+                  }
+                }
+              }
+            }
           ]},
           {cols: [
             {view:"button", id:"StainB", value:"Update", borderless:true,autowidth:true, click:updateGroups},
-            {view:"text", id:"Stain", label:'Stain', labelPosition:"top", value:""}
+            {view:"text", id:"Stain", label:'Stain', labelPosition:"top", value:"",
+              on: {"onKeyPress": function(code, e,id) {
+                  if (code == 13) {
+                    updateGroups($$("StainB").config.id)
+                  }
+                }
+              }
+            }
           ]},
           {cols: [
             {view:"button", id:"StainDateB", value:"Update", borderless:true,autowidth:true, click:updateGroups},
-            {view:"text", id:"StainDate", label:'StainDate', labelPosition:"top", value:""}
+            {view:"text", id:"StainDate", label:'StainDate', labelPosition:"top", value:"",
+              on: {"onKeyPress": function(code, e,id) {
+                  if (code == 13) {
+                    updateGroups($$("StainDateB").config.id)
+                  }
+                }
+              }
+            }
           ]},
-          {view:"button",id:"AllButton", value:"UPDATE ALL GROUPS"}//,click:updateAllGroups}
+          {view:"button",id:"AllButton", value:"UPDATE ALL GROUPS",click:updateAllGroups}//,click:updateAllGroups}
         ]
       }
     ]
@@ -139,12 +183,12 @@
       return imgString
       },
     }, 
-    {id: "BrainID", sort:"string"},
-    {id: "Hemi", sort:"string"},
-    {id: "Column", sort:"string"},
-    {id: "Section", sort:"string"},
-    {id: "Stain", sort:"string"},
-    {id: "StainDate", sort:"string"},
+    {id: "BrainID", sort:"string",header:["BrainID",{content:"selectFilter"}],editor:"text"},
+    {id: "Hemi", sort:"string",header:["Hemi",{content:"selectFilter"}],editor:"text"},
+    {id: "Column", sort:"string",header:["Column",{content:"selectFilter"}],editor:"text"},
+    {id: "Section", sort:"string",header:["Section",{content:"selectFilter"}],editor:"text"},
+    {id: "Stain", sort:"string",header:["Stain",{content:"selectFilter"}],editor:"text"},
+    {id: "StainDate", sort:"string",header:["StainDate",{content:"selectFilter"}],editor:"text"},
     {id: "name", sort: "string"},
     {id: "_id", sort: "string"},
     {id: "size", sort: "int"},
@@ -200,31 +244,62 @@
       webix.message("Please select and image and run OCR before attempting to save!");
     };
   };
+
+  function updateGroupsByCell(key, value) {
+    if ($$("wbx_MainGrid").getSelectedId() != null) {
+      webix.ajax("http://127.0.0.1:5000/updateMetadataGroup?imageID="+currentImageID+"&textID="+key+"&textValue="+value, function(response) {
+          webix.message(response);
+          //the editor changes the value, the code below is not needed
+          // var cid = $$("wbx_MainGrid").getSelectedId();
+          // var item = $$("wbx_MainGrid").getItem(cid.row);
+          // cid.column = textID;
+          // item[cid.column] = textValue;
+          // $$("wbx_MainGrid").updateItem(cid.row, item);
+          // $$("wbx_MainGrid").refreshFilter();
+        });
+      } else {
+        webix.message("Please selecte a folder first.");
+    }
+  };
+
   function updateGroups(id) { //id is the label, and currentID is the id of the text box
-      textID = id.substring(0,id.length-1);
-      textValue =$$(textID).getValue();
-      // console.log(textID);
-      // console.log(textValue);
-      webix.ajax("http://127.0.0.1:5000/updateMetadataGroup?imageID="+currentImageID+"&textID="+textID+"&textValue="+textValue, function(response) {
-        webix.message(response);
+      textID = [id.substring(0,id.length-1)];
+      textValue =[$$(textID).getValue()];
+      if ($$("wbx_MainGrid").getSelectedId() != null) {
+        webix.ajax("http://127.0.0.1:5000/updateMetadataGroup?imageID="+currentImageID+"&textID="+textID+"&textValue="+textValue, function(response) {
+          webix.message(response);
         
-        var cid = $$("wbx_MainGrid").getSelectedId();
-        console.log(cid);
-        var item = $$("wbx_MainGrid").getItem(cid.row);
-        cid.column = textID;
-        item[cid.column] = textValue;
-        $$("wbx_MainGrid").updateItem(cid.row, item);
-      });
-  }
+          var cid = $$("wbx_MainGrid").getSelectedId();
+          var item = $$("wbx_MainGrid").getItem(cid.row);
+          cid.column = textID;
+          item[cid.column] = textValue;
+          $$("wbx_MainGrid").updateItem(cid.row, item);
+          $$("wbx_MainGrid").refreshFilter();
+        });
+      } else {
+        webix.message("Please selecte a folder first.");
+      }
+  };
 
   function updateAllGroups(id) { //id is the label, and currentID is the id of the text box
-      textID = id.substring(0,id.length-1);
-      textValue = [$$('BrainID').getValue(),$$('Column').getValue(),$$('Section').getValue(),$$('Hemi').getValue(),$$('Stain').getValue(),$$('StainDate').getValue()];
-      console.log(textID);
-      console.log(textValue);
-      webix.ajax("http://127.0.0.1:5000/updateMetadataGroup?imageID="+currentImageID+"&textID="+textID+"&textValue="+textValue, function(response) {
-        webix.message(response);
-      });
+      var textID = ['BrainID','Column','Section','Hemi','Stain','StainDate'];
+      var textValue = [$$('BrainID').getValue(),$$('Column').getValue(),$$('Section').getValue(),$$('Hemi').getValue(),$$('Stain').getValue(),$$('StainDate').getValue()];
+
+      if ($$("wbx_MainGrid").getSelectedId() != null) {
+        webix.ajax("http://127.0.0.1:5000/updateMetadataGroup?imageID="+currentImageID+"&textID="+textID+"&textValue="+textValue, function(response) {
+          webix.message(response);
+          var cid = $$("wbx_MainGrid").getSelectedId();
+          var item = $$("wbx_MainGrid").getItem(cid.row);
+          for (i = 0; i<textValue.length; i++){
+            cid.column = textID[i];
+            item[cid.column] = textValue[i];
+            $$("wbx_MainGrid").updateItem(cid.row, item);
+            $$("wbx_MainGrid").refreshFilter();
+          }
+        });
+      } else {
+      webix.message("Please selecte a folder first.")
+    }
   }
   save_button = {
     view:"button",
@@ -281,6 +356,8 @@
     columns: FoxFolderViewColList,
     rowHeight: 100,
     select: "row",
+    editable:false,
+    editaction:"none",
     map: {
       'BrainID': "#meta.groups.BrainID#",
       'Column': "#meta.groups.Column#",
@@ -290,6 +367,17 @@
       'StainDate': "#meta.groups.StainDate#"
     },
     on: { //this will fire when selection is changed on datatable
+      onItemDblClick: function(id){
+        this.edit(id);
+      },
+      onEditorChange: function(id){
+        var item = $$("wbx_MainGrid").getItem(id.row); //get the information on selected row
+        var key = id.column; //key, such as BrainID, Hemi, etc. for recently edited cell
+        var value = item[key]; //new value, recently changed in cell
+        //run the function that takes in the change in the cell and saves it on the API
+        updateGroupsByCell(key,value);
+      },
+
       "onItemClick": function(id){
         currentOCR['sampleOutput'] = '';
         $$('wbx_richOCR').setValue(""); //clear ocr output when switching files
@@ -303,7 +391,7 @@
   }
   wbx_RightMainPanel = {
     rows: [ //contains another header
-      {view:"template", type:"header",template: "DataGrid"},
+      {view:"template", type:"header",template: "Files in current folder"},
       wbx_MainGrid
     ]
   }
@@ -318,6 +406,13 @@
       },
     ]
   });
+
+  // $$("BrainID").attachEvent("onKeyPress", function(code,e) {
+  //   if (code == 13) {
+  //     console.log("hello")
+  //   }
+  // });
+
   </script>
 </body>
 </html>
