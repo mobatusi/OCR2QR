@@ -96,7 +96,7 @@ def updateMetadata():
 	API_URL = "http://candygram.neurology.emory.edu:8080/api/v1"
 	#sign-in to the client using user & password
 	gc = girder_client.GirderClient(apiUrl=API_URL)
-	gc.authenticate(username="admin", password="password")
+	gc.authenticate(username="add the administrative username", password="")
 	temp = request.args.get('imageID')
 	# temp = "item/" + temp + "/metadata"
 	# print temp
@@ -119,7 +119,7 @@ def updateMetadataGroup():
 	API_URL = "http://candygram.neurology.emory.edu:8080/api/v1"
 	# #sign-in to the client using user & password
 	gc = girder_client.GirderClient(apiUrl=API_URL)
-	gc.authenticate(username="admin", password="password")
+	gc.authenticate(username="add admininstrative username", password="")
 	groups = gc.getItem(imageID)['meta']
 	if groups.has_key('groups'):
 		groups = groups['groups']
