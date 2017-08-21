@@ -201,7 +201,11 @@
         var data = JSON.parse(response);
         // data['sampleOutput'] = removeSpecialChars(data['sampleOutput']);
         currentOCR = data;
-        $$("wbx_richOCR").setValue(currentOCR['sampleOutput']);
+        if(currentOCR['sampleOutput'].length > 0){
+          $$("wbx_richOCR").setValue(currentOCR['sampleOutput']);
+        } else {
+          webix.message('OCR didn\'t capture anything');
+        }
       })
     } else {
       webix.message("Please select a file from the right first.");
@@ -301,6 +305,31 @@
       webix.message("Please selecte a folder first.")
     }
   }
+
+  function runRegex(id) {
+    currentString = $$('wbx_richOCR').getValue();
+    if(currentString.length > 0) {
+      webix.ajax("http://127.0.0.1:5000/runRegex?ocr_output="+currentString, function(response) {
+        data = JSON.parse(response);// webix.message(response);
+        //Set the regex values on the text boxes, but do no automatically update
+        if(data.groups.BrainID != null) {$$('BrainID').setValue(data.groups.BrainID);};
+        if(data.groups.Hemi != null) {$$('Hemi').setValue(data.groups.Hemi);};
+        if(data.groups.Column != null) {$$('Column').setValue(data.groups.Column);};
+        if(data.groups.Section != null) {$$('Section').setValue(data.groups.Section);};
+        if(data.groups.Stain != null) {$$('Stain').setValue(data.groups.Stain);};
+        if(data.groups.StainDate != null) {$$('StainDate').setValue(data.groups.StainDate);};
+        // $$('BrainID').setValue(data.groups.BrainID);
+        // $$('Hemi').setValue(data.groups.Hemi);
+        // $$('Column').setValue(data.groups.Column);
+        // $$('Section').setValue(data.groups.Section);
+        // $$('Stain').setValue(data.groups.Stain);
+        // $$('StainDate').setValue(data.groups.StainDate);
+        });
+    } 
+  }
+
+
+
   save_button = {
     view:"button",
     id:"save_button",
@@ -327,13 +356,16 @@
        template: ""}
     ]
   }
+
   wbx_outputOCR = {
     rows: [ 
-      {view:"template", id:"ocroutputHeader", template:"OCR Output", type:"header"},
+      {cols: [{view:"template", id:"ocroutputHeader", template:"OCR Output", type:"header"},
+      {view:"button",id:"regex_button",value:"Get Groups",type:"form",click: runRegex}
+      ]},
       {
         view:"richtext", 
         id:"wbx_richOCR", 
-        label:"OCR Output",
+        label:"",
         labelPosition:"top",
         value:"", 
       }
