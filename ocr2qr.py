@@ -6,12 +6,13 @@ import ctypes
 import gc
 import pprint
 import qrcode
+import scipy
 
 from PIL import Image
 from pytesseract import *
 from picamera import PiCamera
 from time import sleep
-
+from skimage import filters
 #from qrcode import *
 
 # take a picture via the webcam. Eventually we will switch to using the pi camera
@@ -41,8 +42,24 @@ camera.capture('/home/pi/Documents/Projects/OCR2QR/image.jpg')
 camera.stop_preview()
 mImgFile = "image.jpg"
 
-im = Image.open(mImgFile)
-text = image_to_string(im)
+# Opening and reading the image
+# converting the image to grayscale
+im = Image.open(mImgFile).convert('L')
+
+# im is converted to an ndarray
+im_array = scipy.misc.fromimage(im)
+
+# Perform Otsu's thresholding
+thresh = filters.threshold_otsu(im_array)
+
+# pixels with intensity greater than 
+# threshold are kept
+im_thresh = im_array > thresh
+
+# im_thresh is converted from ndarray to image 
+im_thresh = scipy.misc.toimage(im_thresh)
+
+text = image_to_string(im_thresh)
 
 print (text)
 output = open("output", "w")

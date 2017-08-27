@@ -1,0 +1,76 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <link rel="stylesheet" href="../bower_components/webix/codebase/webix.css" type="text/css">
+  <script src="../bower_components/webix/codebase/webix.js" type="text/javascript"></script>
+  <script src="../bower_components/jquery/dist/jquery.js" type="text/javascript"></script>
+</head>
+
+<style>
+  .standardDiv {
+    background-color: rgb(97,91,90);
+    font-size: 18px;
+    color: white;
+  }
+</style>
+
+<body>
+  <script type="text/javascript" charset="utf-8">
+
+  //Now that the functions have been set-up, predefine the webix containers to be used and edit easier down the line. 
+  myHeader = {
+    view: "template",
+    type: "header",
+    template: "DSA Meta Data Managing",
+    css:"standardDiv"
+  };
+
+  var URL_w_DATA = 'successSlides.json';
+
+  var tableCols = [
+    {id:'currentFileName', sort:"string", header: ["File Name", { content: "selectFilter"}]},
+    {id:'JCFileName', sort:"string", header: ["Proposed File Name", { content: "selectFilter"}]},
+    {id:'patientID', sort:"string", header: ["Patient ID", {content: "selectFilter"}]},
+    {id:'stainType', sort:"string", header: ["Stain Type", {content: "selectFilter"}]}, 
+    {id:'blockID', sort:"string", header: ["Block ID", {content: "selectFilter"}]}, 
+    {id:'slideFormat', sort:"string", header: ["Format", {content: "selectFilter"}]},
+    {id:'_id', header: ["ID"]}
+    ];
+
+
+  wbx_sampleDataTable = {
+    view:"datatable",
+    // id: "wbx_MainGrid",
+    columns: tableCols,
+    columnWidth: 250,
+    rowHeight: 100,
+    select: "row",
+    datatype: "json",
+    url: URL_w_DATA,
+    // autoconfig: true
+    resize: true,
+    tooltip: true,
+    map: {
+      'stainType': "#meta.stainType#",
+      'blockID': "#meta.blockID#",
+      'slideFormat': '#meta.slideFormat#',
+      'patientID': '#meta.patientID#',
+      'currentFileName': '#meta.currentFileName#',
+      'JCFileName': '#meta.JCFileName#'
+    }
+  }
+  //main ui
+  webix.ui({
+    //This ui is a 2 rows (first is just the header) with the last row being split into 2 columns.
+    rows: [
+      myHeader, //the simple header, this is static
+      {
+        cols: [ wbx_sampleDataTable]
+      },
+    ]
+  });
+
+</script>
+
+</body>
+</html>

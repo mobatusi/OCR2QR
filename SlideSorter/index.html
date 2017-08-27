@@ -21,32 +21,22 @@
   //The bottom two variables are being used
   var  resizer = {  view: "resizer"  } //This just makes it easier to add the resizer at different locations
   var BaseURL = 'http://candygram.neurology.emory.edu:8080/api/v1/'
-
   //What does this function do??? First of all this is a function created in this script, it is not a function inherent to webix or javascript. 
   //This seems to be used when selecting from the drop down select box.
   //It must be supplied the id, which is what is used to pop-up in a message box, before I commented it out. 
   function selectFolder(id) {
-    webix.message(id); //this just spits out the id on the top right using the webix message function. This is unecessary so I can comment it out. 
     var row = this.getPopup().getBody().getItem(id);
-    //This is looking at row id, which must be a json object (I think) and returning the Item from the Body of the Popup from the id 
-    //This clears the the container (wbx_MainGrid) before running the next line
-    //Remember that the double $$ is webix's form of jquery call
     $$("wbx_MainGrid").clearAll();
-    //This jquery call is calling another function that is defined in the bottom part
-    //Not sure why you need to pass it row with '_id' on it. In javascript this means that it is passing the _id property of the row object
     $$("wbx_MainGrid").load( ListItemsInGirderFolder( row['_id'])  );
     //Note that the function above (inside the load) returns a url. This url contains json objects (many of them), with each object having an _id property
   };
-
 //below is a sample directory for a fox subdirectory
 //http://candygram.neurology.emory.edu:8080/api/v1/item?folderId=595d0b9b92ca9a000dd5691d&limit=50&sort=lowerName&sortdir=1
-
 //This function is just a string concatenation function, retuns a url to load
   function ListItemsInGirderFolder( folderID) {
     url = BaseURL + 'item?folderId=' + folderID + "&sort=lowerName&limit=50&sortdir=1"
     return url
   }
-
   //Now that the functions have been set-up, predefine the webix containers to be used and edit easier down the line. 
   myHeader = {
     view: "template",
@@ -54,13 +44,11 @@
     template: "DSA SlideSorter Helper",
     css:"standardDiv"
   };
-
   //This is the url for the top level folder, where the directories of each image date are located at. The previous url (those obtained from teh functions) are for each image inside those directories (I think)
   url_FoxTopLevel_Folders = 'http://candygram.neurology.emory.edu:8080/api/v1/folder?parentType=collection&parentId=595d08b392ca9a000d0748df&limit=50&sort=lowerName&sortdir=1'
   ImageURL = "http://candygram.neurology.emory.edu:8080/api/v1/item/595b7b4292ca9a000d071697/tiles/images/";
   ImageBaseURL = "http://candygram.neurology.emory.edu:8080/api/v1/item/";
   thumbHeight = 300;
-
   //I think this container is changed dynamically as different folders are selected
   wbx_FolderSelector = {
     view: "combo",
@@ -75,18 +63,22 @@
       }
     },
   }
-
   //this function is definitely required to load the 
   webix.ready(function() {
     var list = $$("wbx_FolderSelector").getPopup().getList();
     list.clearAll();
-    list.load(url_FoxTopLevel_Folders); //loads json objects to list
+    list.load(url_FoxTopLevel_Folders);
+    //loads json objects to list
     //$$("wbx_FolderSelector").attachEvent("onAfterRender", function() {
       //webix.message("DO SOMETHING!")
       //this.getItem
     //})
+    webix.ajax("http://localhost:5000/ocr/home/juan_carlos/Dropbox/Gutman_Lab/OCR2QR/SlideSorter/1008028.svs.thumb.labelImage.512.jpg", function(response) {
+      console.log(response);
+      var data = JSON.parse(response);
+      $$("outputOCR").parse(data);
+    })
   });
-
   //left panel that dynamically switches images displayed based on the file selected from the right panel datatable
   /// Use Jquery to get the image    $("#myLabelImg").attr("src")  should update on click
   wbx_MyImageSet = {
@@ -94,7 +86,6 @@
     id: "wbx_MyImageSet",
     template: "<img id='labelImg' src='" + ImageURL + "label?height=" + thumbHeight + "' >"
   }
-
   // Let's list the folders for the FOX Collection
   //the sort command coupled with the id allows for formatting of the datatable based ont he svs file. This is how it is able to load the data properly
   FoxFolderViewColList = [
@@ -111,9 +102,8 @@
 
   //the left panel (not including the header)
   wbx_LeftMainPanel = {
-    rows: [ wbx_FolderSelector, wbx_MyImageSet ]
+    rows: [ wbx_FolderSelector, wbx_MyImageSet]
   }
-
   wbx_MainGrid = {
     view:"datatable",
     id: "wbx_MainGrid",
@@ -122,18 +112,14 @@
     rowHeight: 100,
     select: "row",
     on: { //this will fire when selection is changed on datatable
-      //"onSelectChange": function(id) { 
       "onItemClick": function(id){
-        //webix.message("select id: " + id) //for debugging
         DataForCurrentRow =   this.getItem(id);
-            //console.log(DataForCurrentRow);
         currentImageURL = ImageBaseURL + DataForCurrentRow._id + "/tiles/images/label?height=" + thumbHeight
-        //console.log(currentImageURL)
+        // alert(currentImageURL)
         $("#labelImg").attr("src",currentImageURL);
       }
     }
   }
-
   wbx_RightMainPanel = {
     rows: [ //contains another header
       {view:"template", type:"header",template: "DataGrid", css:"standardDiv"},
@@ -151,7 +137,6 @@
       },
     ]
   });
-
   </script>
 </body>
 </html>
